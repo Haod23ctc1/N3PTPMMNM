@@ -1,0 +1,46 @@
+
+name: CI - Website Noi That
+
+on:
+  push:
+    branches:
+      - main
+      - feature/ci-cd
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore WebsiteNoiThat.sln
+
+      - name: Install .NET Framework 4.5.2 reference assemblies
+        shell: pwsh
+        run: |
+          $packageDir = "$env:RUNNER_TEMP\ReferenceAssemblies"
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net452 -Version 1.0.3 -OutputDirectory $packageDir
+
+          $reference = Get-ChildItem $packageDir -Recurse -Filter mscorlib.dll |
+            Where-Object { $_.FullName -match '[\\/]v4\.5\.2[\\/]' } |
+            Select-Object -First 1
+
+          if (-not $reference) {
+            throw "Could not find .NET Framework 4.5.2 reference assemblies"
+          }
+
+          $frameworkRoot = Split-Path (Split-Path $reference.FullName -Parent) -Parent
+          $frameworkRoot = Split-Path $frameworkRoot -Parent
+          "TargetFrameworkRootPath=$frameworkRoot" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Build solution
+        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release "/p:Platform=Any CPU" "/p:TargetFrameworkRootPath=$env:TargetFrameworkRootPath"
