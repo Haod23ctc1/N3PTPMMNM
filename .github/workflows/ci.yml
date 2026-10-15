@@ -1,0 +1,28 @@
+
+name: CI - Website Noi That
+
+on:
+  push:
+    branches:
+      - main
+      - feature/ci-cd
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore WebsiteNoiThat.sln
+
+      - name: Build solution
+        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release "/p:Platform=Any CPU"
