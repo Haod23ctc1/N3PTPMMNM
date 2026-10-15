@@ -21,6 +21,12 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Setup .NET Framework 4.5.2 targeting pack
+        shell: pwsh
+        run: |
+          $url = "https://www.nuget.org/api/v2/package/Microsoft.NETFramework.ReferenceAssemblies.net452"
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net452 -Version 1.0.3 -OutputDirectory packages
+
       - name: Restore NuGet packages
         run: nuget restore WebsiteNoiThat.sln
 
