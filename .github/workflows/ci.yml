@@ -44,15 +44,23 @@ jobs:
       - name: Build solution
         run: msbuild WebsiteNoiThat.sln /p:Configuration=Release "/p:Platform=Any CPU" "/p:TargetFrameworkRootPath=$env:TargetFrameworkRootPath"
 
-      - name: Publish website
+      - name: Package website for deployment
         shell: pwsh
         run: |
-          msbuild WebsiteNoiThat\WebsiteNoiThat.csproj `
-            /p:Configuration=Release `
-            /p:DeployOnBuild=true `
-            /p:WebPublishMethod=FileSystem `
-            "/p:PublishUrl=$env:GITHUB_WORKSPACE\publish" `
-            "/p:TargetFrameworkRootPath=$env:TargetFrameworkRootPath"
+          $source = "WebsiteNoiThat"
+          $destination = "$env:GITHUB_WORKSPACE\publish"
+
+          if (Test-Path $destination) {
+            Remove-Item $destination -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $destination | Out-Null
+
+          Copy-Item "$source\*" $destination -Recurse -Force
+
+          if (-not (Test-Path "$destination\WebsiteNoiThat.csproj")) {
+            throw "Website project files were not found"
+          }
 
       - name: Upload website artifact
         uses: actions/upload-artifact@v4
