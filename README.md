@@ -29,7 +29,7 @@ Website bán nội thất cho phép khách hàng xem, tìm kiếm và đặt mua
 
 ### Yêu cầu
 
-- Windows và Visual Studio 2022, cài workload **ASP.NET and web development**.
+- Windows và Visual Studio, cài workload **ASP.NET and web development**.
 - .NET Framework 4.8 Developer Pack.
 - SQL Server và SQL Server Management Studio (SSMS).
 
