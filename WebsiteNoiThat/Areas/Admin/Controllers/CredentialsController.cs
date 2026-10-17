@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
@@ -34,7 +34,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         }
 
         // GET: Admin/Credentials/Details/5
-        public ActionResult Details(int groupid)
+        public ActionResult Details(int? groupid)
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion_admin];
             if (session != null)

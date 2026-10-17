@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
     public class UserController : HomeController
     {
         DBNoiThat db = new DBNoiThat();
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             return View();
         }

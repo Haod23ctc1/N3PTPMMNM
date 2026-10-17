@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
     {
         // GET: Admin/Contact
         DBNoiThat db = new DBNoiThat();
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             var model = db.Contacts.ToList();
             return View(model);
