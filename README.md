@@ -50,11 +50,23 @@ cd N3PTPMMNM
 Để khôi phục NuGet packages và build trong **Developer PowerShell for Visual Studio**, tại thư mục gốc repository, chạy:
 
 ```powershell
-.\nuget.exe restore .\WebsiteNoiThat.sln
+nuget restore .\WebsiteNoiThat.sln
 msbuild .\WebsiteNoiThat.sln /p:Configuration=Debug
 ```
 
 Đây là ứng dụng ASP.NET MVC 5 chạy trên IIS Express, không phải ASP.NET Core; không chạy bằng `dotnet run`.
+
+### Build và run bằng VS Code
+
+1. Cài Visual Studio 2022 hoặc Build Tools với **MSBuild**, workload **ASP.NET and web development**, .NET Framework 4.8 Developer Pack và IIS Express.
+2. Mở thư mục gốc chứa `WebsiteNoiThat.sln` trong VS Code. Nếu chưa có, cài extension **C# Dev Kit**.
+3. Nếu NuGet packages chưa được khôi phục, chạy `nuget restore .\WebsiteNoiThat.sln` trong terminal (cần NuGet CLI).
+4. Chọn **Terminal > Run Build Task** (hoặc `Ctrl+Shift+B`) và chọn **Build MVC 5 solution**.
+5. Mở **Terminal > Run Task**, chọn **Run with IIS Express**, rồi truy cập localhost. Dừng máy chủ bằng `Ctrl+C` trong terminal của task.
+
+Task sử dụng đường dẫn cài Visual Studio Community mặc định. Nếu dùng edition khác hoặc cài ở vị trí khác, sửa đường dẫn MSBuild trong `.vscode/tasks.json`. Đây là project ASP.NET MVC 5 kiểu cũ; `launchSettings.json` và `dotnet run` dành cho ASP.NET Core không khởi chạy project này.
+
+VS Code có thể hiển thị chẩn đoán Razor sai như `ViewBag`, `Write` hoặc `WriteLiteral` không tồn tại trong `.cshtml` vì dự án MVC 5 trên .NET Framework không dùng Razor tooling của ASP.NET Core. Không sửa các view để xử lý những chẩn đoán giả này: xác nhận bằng build task; nếu cần IntelliSense/kiểm tra Razor đầy đủ, mở solution bằng Visual Studio 2022.
 
 ## 6. Quy trình đóng góp
 
