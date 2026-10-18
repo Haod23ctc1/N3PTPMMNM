@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         DBNoiThat db = new DBNoiThat();
 
         [HasCredential(RoleId = "VIEW_PROVIDER")]
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             return View();
         }

@@ -1,4 +1,4 @@
-﻿
+
 using Models.DAO;
 using Models.EF;
 using PagedList;
@@ -175,8 +175,8 @@ namespace WebsiteNoiThat.Controllers
         public ActionResult PayBy(User n)
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
-            var model = db.Users.SingleOrDefault(a => a.UserId == session.UserId);
-            if (true == true)
+            var model = session != null ? db.Users.SingleOrDefault(a => a.UserId == session.UserId) : null;
+            if (model != null)
             {
                 model.UserId = session.UserId;
                 model.Name = n.Name;
@@ -207,7 +207,6 @@ namespace WebsiteNoiThat.Controllers
                 var cart = (List<CartItem>)Session[CartSession];
                 var detailDao = new OrderDetailDao();
                 double total = 0;
-                double a = 0;
                 var htmldata = "<p><b>STT | Tên | Số lượng | Đơn giá | Khuyến mại</b></p>";
                 int count = 0;
                 foreach (var item in cart)

@@ -1,7 +1,6 @@
-﻿using BotDetect.Web.Mvc;
+using BotDetect.Web.Mvc;
 using Models.DAO;
 using Models.EF;
-using reCAPTCHA.MVC;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -32,6 +31,7 @@ namespace WebsiteNoiThat.Controllers
             return PartialView();
         }
         [HttpPost]
+        [CaptchaValidation("CaptchaCode", "loginCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Login(Models.LoginModel model)
         {
             if (ModelState.IsValid)
@@ -47,6 +47,7 @@ namespace WebsiteNoiThat.Controllers
                     userSession.Username = user.Username;
                     userSession.UserId = user.UserId;
                     Session.Add(Commoncontent.user_sesion, userSession);
+                    MvcCaptcha.ResetCaptcha("loginCaptcha");
                     return Redirect("/");
                 }
                 else if (result == -1)
@@ -73,6 +74,7 @@ namespace WebsiteNoiThat.Controllers
         }
 
         [HttpPost]
+        [CaptchaValidation("CaptchaCode", "registerCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Register(RegisterModel model)
         {
             if(ModelState.IsValid)
@@ -103,6 +105,7 @@ namespace WebsiteNoiThat.Controllers
                     if (result > 0)
                     {
                         ViewBag.Success = "Đăng ký thành công";
+                        MvcCaptcha.ResetCaptcha("registerCaptcha");
                         var models = db.Users.SingleOrDefault(n => n.Username == model.UserName);
                         return RedirectToAction("Card", new { UserId= models.UserId });
                     }
@@ -112,8 +115,7 @@ namespace WebsiteNoiThat.Controllers
                     }
                 }
             }
-            model = new RegisterModel();
-            return View();
+            return View(model);
         }
 
         [HttpGet]
