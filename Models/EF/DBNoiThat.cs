@@ -1,15 +1,16 @@
+﻿using System;
+using System.Data.Entity;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+
 namespace Models.EF
 {
-    using System;
-    using System.Data.Entity;
-    using System.ComponentModel.DataAnnotations.Schema;
-    using System.Linq;
-
     public partial class DBNoiThat : DbContext
     {
         public DBNoiThat() : base("name=DBNoiThat")
         {
         }
+
         public virtual DbSet<Card> Cards { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Contact> Contacts { get; set; }
@@ -26,15 +27,7 @@ namespace Models.EF
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            //    modelBuilder.Entity<User>()
-            //        .Property(e => e.Password)
-            //        .IsFixedLength();
-
-            //    modelBuilder.Entity<UserGroup>()
-            //        .Property(e => e.Name)
-            //        .IsFixedLength();
+            // Cấu hình các mối quan hệ hoặc thuộc tính đặc biệt nếu cần thiết tại đây
         }
-
-        //public System.Data.Entity.DbSet<WebsiteNoiThat.Models.ProductViewModel> ProductViewModels { get; set; }
     }
 }
