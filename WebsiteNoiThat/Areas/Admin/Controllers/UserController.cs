@@ -140,7 +140,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
             var user = db.Users.Find(session.UserId);
             if (user == null)
             {
-                return RedirectToAction("Login", "Login");
+                return RedirectToAction("Index", "Login");
             }
 
             user.Name = a.Name;
