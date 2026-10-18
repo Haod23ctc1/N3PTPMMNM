@@ -138,7 +138,10 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                 model.Address = n.Address;
                 model.Phone = n.Phone;
                 model.Username = n.Username;
-                model.Password = Encryptor.MD5Hash(n.Password);
+                if (!string.IsNullOrWhiteSpace(n.Password))
+                {
+                    model.Password = Encryptor.MD5Hash(n.Password);
+                }
                 model.Email = n.Email;
                 model.GroupId = n.GroupId;
 

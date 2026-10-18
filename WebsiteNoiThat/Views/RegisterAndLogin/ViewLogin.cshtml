@@ -10,7 +10,12 @@
         @session.Username
     </button>
     <ul class="dropdown-menu dropdown-user" id="account_dropdown">
-
+        <li>
+            <a href="/RegisterAndLogin/ViewCurentUser"><i class="fa fa-user"></i> Thông tin tài khoản</a>
+        </li>
+        <li>
+            <a href="/RegisterAndLogin/ChangePassword"><i class="fa fa-key"></i> Đổi mật khẩu</a>
+        </li>
         <li>
             <a href="/Cart/HistoryCart"><i class="fa fa-hourglass"></i> Lịch sử mua hàng</a>
         </li>
@@ -31,4 +36,3 @@ else
 {
     <a id="a_account" href="/RegisterAndLogin/Login"><img src="~/Content/client/assets/img/round-account-button-with-user-inside.png" /></a>
 }
-
