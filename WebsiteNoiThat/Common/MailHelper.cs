@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -28,11 +28,11 @@ namespace WebsiteNoiThat.Common
 
             var client = new SmtpClient();
 
-            client.EnableSsl = true;
+            client.EnableSsl = enabledSsl;
             client.UseDefaultCredentials = false;
             client.Credentials = new NetworkCredential(fromEmailAddress, fromEmailPassword);
-            client.Host = "smtp.gmail.com";
-            client.Port = 587;
+            client.Host = !string.IsNullOrEmpty(smtpHost) ? smtpHost : "smtp.gmail.com";
+            client.Port = !string.IsNullOrEmpty(smtpPort) ? int.Parse(smtpPort) : 587;
 
             client.Send(message);
         }
