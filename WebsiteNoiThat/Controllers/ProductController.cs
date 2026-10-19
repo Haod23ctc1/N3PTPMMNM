@@ -83,7 +83,13 @@ namespace WebsiteNoiThat.Controllers
         //tìm kiếm
         public ActionResult Search(string keyword, int page = 1, int pagesize = 16)
         {
-          
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                // Không có từ khóa -> về trang chủ và báo lỗi
+                TempData["SearchError"] = "Vui lòng nhập từ khóa để tìm kiếm.";
+                return RedirectToAction("Index", "Home");
+            }
+
             int total = 0;
             var model = new ProductDao().Search(keyword, ref total, page, pagesize);
             ViewBag.Total = total;
