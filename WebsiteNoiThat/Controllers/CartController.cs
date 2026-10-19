@@ -33,6 +33,18 @@ namespace WebsiteNoiThat.Controllers
                     ViewBag.Status = "Đang chờ xác nhận";
                     list = (List<CartItem>)cart;
                 }
+
+                //Tổng kết giỏ hàng: số lượng và thành tiền sau giảm giá
+                double total = 0;
+                int totalQuantity = 0;
+                foreach (var item in list)
+                {
+                    total += Convert.ToDouble(item.Product.Price * item.Quantity - item.Product.Price * item.Product.Discount * 0.01 * item.Quantity);
+                    totalQuantity += item.Quantity;
+                }
+                ViewBag.TotalQuantity = totalQuantity;
+                ViewBag.Total = total;
+
                 return View(list);
             }
             else

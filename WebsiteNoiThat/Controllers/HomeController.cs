@@ -19,10 +19,16 @@ namespace WebsiteNoiThat.Controllers
         {
             var cart = Session[Commoncontent.CartSession];
             var list = new List<CartItem>();
+            double total = 0;
             if (cart != null)
             {
                 list = (List<CartItem>)cart;
+                foreach (var item in list)
+                {
+                    total += Convert.ToDouble(item.Product.Price * item.Quantity - item.Product.Price * item.Product.Discount * 0.01 * item.Quantity);
+                }
             }
+            ViewBag.Total = total;
 
             return PartialView(list);
         }
