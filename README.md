@@ -54,19 +54,25 @@ nuget restore .\WebsiteNoiThat.sln
 msbuild .\WebsiteNoiThat.sln /p:Configuration=Debug
 ```
 
-Đây là ứng dụng ASP.NET MVC 5 chạy trên IIS Express, không phải ASP.NET Core; không chạy bằng `dotnet run`.
+Đây là ứng dụng ASP.NET MVC 5 chạy trên IIS Express, không phải ASP.NET Core.
 
 ### Build và run bằng VS Code
 
 1. Cài Visual Studio 2022 hoặc Build Tools với **MSBuild**, workload **ASP.NET and web development**, .NET Framework 4.8 Developer Pack và IIS Express.
-2. Mở thư mục gốc chứa `WebsiteNoiThat.sln` trong VS Code. Nếu chưa có, cài extension **C# Dev Kit**.
+2. Mở thư mục gốc chứa `WebsiteNoiThat.sln` trong VS Code. Dự án dùng định dạng `.csproj` cũ của ASP.NET MVC 5, vì vậy dùng extension **C#** với OmniSharp; không dùng **C# Dev Kit** cho workspace này.
 3. Nếu NuGet packages chưa được khôi phục, chạy `nuget restore .\WebsiteNoiThat.sln` trong terminal (cần NuGet CLI).
-4. Chọn **Terminal > Run Build Task** (hoặc `Ctrl+Shift+B`) và chọn **Build MVC 5 solution**.
-5. Mở **Terminal > Run Task**, chọn **Run with IIS Express**, rồi truy cập localhost. Dừng máy chủ bằng `Ctrl+C` trong terminal của task.
+4. Chọn **Terminal > Run Build Task** (hoặc `Ctrl+Shift+B`), rồi chọn **Build MVC 5 solution**.
+5. Chọn **Terminal > Run Task > Run with IIS Express**. Mở localhost; dừng server bằng `Ctrl+C` trong terminal của task.
 
-Task sử dụng đường dẫn cài Visual Studio Community mặc định. Nếu dùng edition khác hoặc cài ở vị trí khác, sửa đường dẫn MSBuild trong `.vscode/tasks.json`. Đây là project ASP.NET MVC 5 kiểu cũ; `launchSettings.json` và `dotnet run` dành cho ASP.NET Core không khởi chạy project này.
+   Các task dùng đường dẫn mặc định của Visual Studio 2022 Community và IIS Express. Nếu cài ở vị trí khác, sửa `command` tương ứng trong `.vscode/tasks.json`. Đây là project ASP.NET MVC 5 kiểu cũ.
 
-VS Code có thể hiển thị chẩn đoán Razor sai như `ViewBag`, `Write` hoặc `WriteLiteral` không tồn tại trong `.cshtml` vì dự án MVC 5 trên .NET Framework không dùng Razor tooling của ASP.NET Core. Không sửa các view để xử lý những chẩn đoán giả này: xác nhận bằng build task; nếu cần IntelliSense/kiểm tra Razor đầy đủ, mở solution bằng Visual Studio 2022.
+VS Code có thể hiển thị chẩn đoán Razor sai như `ViewBag`, `Write` hoặc `WriteLiteral` không tồn tại trong `.cshtml` vì dự án MVC 5 trên .NET Framework không dùng Razor tooling của ASP.NET Core. Không sửa các view để xử lý những chẩn đoán giả này: xác nhận bằng build task; nếu cần IntelliSense/kiểm tra Razor đầy đủ, mở solution bằng Visual Studio.
+
+Để tránh cảnh báo project cũ và lỗi `MSB4019` do C# Dev Kit dùng MSBuild trong .NET SDK:
+
+1. Trong Extensions, nhấp bánh răng của **C# Dev Kit** và chọn **Disable (Workspace)**.
+2. Giữ extension **C#** được bật; thiết lập workspace đã chọn OmniSharp trong `.vscode/settings.json`.
+3. Chạy **Developer: Reload Window**. Dùng MSBuild của Visual Studio để build solution MVC 5 này.
 
 ## 6. Quy trình đóng góp
 
@@ -78,6 +84,50 @@ VS Code có thể hiển thị chẩn đoán Razor sai như `ViewBag`, `Write` h
 6. Push nhánh lên GitHub.
 7. Tạo Pull Request để đề xuất hợp nhất vào nhánh `main`.
 8. Chờ người quản lý dự án xem xét và phản hồi.
+
+### Cập nhật mã nguồn local sau khi Pull Request được gộp vào `main`
+
+Sau khi PR đã được merge, cập nhật `main` trên máy trước. Nếu đang có thay đổi chưa commit, cất chúng tạm để tránh Git ghi đè khi chuyển nhánh:
+
+```powershell
+git status
+git stash push -u -m "WIP truoc khi cap nhat main"
+git fetch origin
+```
+
+Nếu không có thay đổi chưa commit, bỏ qua lệnh `git stash`. Nếu đã có nhánh local `main`:
+
+```powershell
+git switch main
+git pull --ff-only origin main
+```
+
+Nếu chưa có nhánh local `main`, tạo nhánh theo remote và cập nhật:
+
+```powershell
+git switch --track -c main origin/main
+git pull --ff-only origin main
+```
+
+Để cập nhật nhánh tính năng đang làm với các thay đổi mới nhất trên `main`, chuyển sang nhánh đó rồi merge:
+
+```powershell
+git switch feature/ten-nhanh
+git merge origin/main
+```
+
+Nếu Git báo conflict, sửa các tệp được liệt kê, chạy `git add <ten-tep>` rồi commit merge trước khi tiếp tục. Không dùng `reset --hard` hoặc `checkout -f` để xử lý conflict vì có thể làm mất thay đổi.
+
+Khôi phục thay đổi đã cất sau khi quay lại đúng nhánh nơi bạn tạo stash (ví dụ `develop` hoặc `feature/ten-nhanh`):
+
+```powershell
+git switch ten-nhanh-ban-da-cat-stash
+git stash list
+git stash apply
+git status
+```
+
+Nếu `git stash apply` báo conflict, giải quyết từng tệp rồi kiểm tra lại `git status`; stash vẫn được giữ lại. Chỉ xóa stash sau khi đã xác nhận các thay đổi được khôi phục đầy đủ; nếu có nhiều stash, dùng đúng mã `stash@{n}` hiển thị bởi `git stash list`. Mỗi nhánh tính năng cần được đồng bộ riêng với nhánh đích của PR; không cần merge mọi nhánh vào tất cả các nhánh khác.
 
 Xem hướng dẫn chi tiết tại [CONTRIBUTING.md](CONTRIBUTING.md).
 
