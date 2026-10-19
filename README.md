@@ -23,7 +23,7 @@ Website bán nội thất cho phép khách hàng xem, tìm kiếm và đặt mua
 - C#: ASP.NET MVC 5, .NET Framework 4.8.
 - Entity Framework 6 và SQL Server.
 - Razor, HTML, CSS, JavaScript, Bootstrap và jQuery.
-- Visual Studio 2022 và IIS Express để phát triển/chạy ứng dụng.
+- Visual Studio và IIS Express để phát triển/chạy ứng dụng.
 
 ## 5. Cài đặt dự án
 
@@ -58,17 +58,17 @@ msbuild .\WebsiteNoiThat.sln /p:Configuration=Debug
 
 ### Build và run bằng VS Code
 
-1. Cài Visual Studio 2022 hoặc Build Tools với **MSBuild**, workload **ASP.NET and web development**, .NET Framework 4.8 Developer Pack và IIS Express.
+1. Cài Visual Studio hoặc Build Tools với **MSBuild**, workload **ASP.NET and web development**, .NET Framework 4.8 Developer Pack và IIS Express.
 2. Mở thư mục gốc chứa `WebsiteNoiThat.sln` trong VS Code. Dự án dùng định dạng `.csproj` cũ của ASP.NET MVC 5, vì vậy dùng extension **C#** với OmniSharp; không dùng **C# Dev Kit** cho workspace này.
 3. Nếu NuGet packages chưa được khôi phục, chạy `nuget restore .\WebsiteNoiThat.sln` trong terminal (cần NuGet CLI).
 4. Chọn **Terminal > Run Build Task** (hoặc `Ctrl+Shift+B`), rồi chọn **Build MVC 5 solution**.
 5. Chọn **Terminal > Run Task > Run with IIS Express**. Mở localhost; dừng server bằng `Ctrl+C` trong terminal của task.
 
-   Các task dùng đường dẫn mặc định của Visual Studio 2022 Community và IIS Express. Nếu cài ở vị trí khác, sửa `command` tương ứng trong `.vscode/tasks.json`. Đây là project ASP.NET MVC 5 kiểu cũ.
+   Các task dùng đường dẫn mặc định của Visual Studio Community và IIS Express. Nếu cài ở vị trí khác, sửa `command` tương ứng trong `.vscode/tasks.json`. Đây là project ASP.NET MVC 5 kiểu cũ.
 
 VS Code có thể hiển thị chẩn đoán Razor sai như `ViewBag`, `Write` hoặc `WriteLiteral` không tồn tại trong `.cshtml` vì dự án MVC 5 trên .NET Framework không dùng Razor tooling của ASP.NET Core. Không sửa các view để xử lý những chẩn đoán giả này: xác nhận bằng build task; nếu cần IntelliSense/kiểm tra Razor đầy đủ, mở solution bằng Visual Studio.
 
-Để tránh cảnh báo project cũ và lỗi `MSB4019` do C# Dev Kit dùng MSBuild trong .NET SDK:
+Để tránh cảnh báo project cũ và lỗi `MSB4019` trong workspace ASP.NET MVC 5:
 
 1. Trong Extensions, nhấp bánh răng của **C# Dev Kit** và chọn **Disable (Workspace)**.
 2. Giữ extension **C#** được bật; thiết lập workspace đã chọn OmniSharp trong `.vscode/settings.json`.
