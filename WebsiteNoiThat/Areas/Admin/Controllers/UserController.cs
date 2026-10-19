@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
     public class UserController : HomeController
     {
         DBNoiThat db = new DBNoiThat();
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             return View();
         }
@@ -84,7 +84,10 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                 var models = db.Users.Where(a => a.UserId == n.UserId).First();
                 models.Name = n.Name;
                 models.Username = n.Username;
-                models.Password = Encryptor.MD5Hash(n.Password);
+                if (!string.IsNullOrWhiteSpace(n.Password))
+                {
+                    models.Password = Encryptor.MD5Hash(n.Password);
+                }
                 models.GroupId = n.GroupId;
                 models.Phone = n.Phone;
                 models.Status = n.Status;
@@ -133,9 +136,22 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         [HasCredential(RoleId = "EDIT_ADMIN")]
         public ActionResult UserProfile(User a)
         {
-            db.Entry(a).State = System.Data.Entity.EntityState.Modified;
+            var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion_admin];
+            var user = db.Users.Find(session.UserId);
+            if (user == null)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+
+            user.Name = a.Name;
+            user.Phone = a.Phone;
+            user.Address = a.Address;
+            user.Email = a.Email;
+            user.Username = a.Username;
+            user.GroupId = a.GroupId;
+            user.Status = a.Status;
             db.SaveChanges();
-            return View();
+            return RedirectToAction("UserProfile");
         }
 
     }

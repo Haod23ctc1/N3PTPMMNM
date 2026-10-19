@@ -1,7 +1,6 @@
-﻿using BotDetect.Web.Mvc;
+using BotDetect.Web.Mvc;
 using Models.DAO;
 using Models.EF;
-using reCAPTCHA.MVC;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -32,6 +31,7 @@ namespace WebsiteNoiThat.Controllers
             return PartialView();
         }
         [HttpPost]
+        [CaptchaValidation("CaptchaCode", "loginCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Login(Models.LoginModel model)
         {
             if (ModelState.IsValid)
@@ -47,6 +47,7 @@ namespace WebsiteNoiThat.Controllers
                     userSession.Username = user.Username;
                     userSession.UserId = user.UserId;
                     Session.Add(Commoncontent.user_sesion, userSession);
+                    MvcCaptcha.ResetCaptcha("loginCaptcha");
                     return Redirect("/");
                 }
                 else if (result == -1)
@@ -73,6 +74,7 @@ namespace WebsiteNoiThat.Controllers
         }
 
         [HttpPost]
+        [CaptchaValidation("CaptchaCode", "registerCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Register(RegisterModel model)
         {
             if(ModelState.IsValid)
@@ -103,6 +105,7 @@ namespace WebsiteNoiThat.Controllers
                     if (result > 0)
                     {
                         ViewBag.Success = "Đăng ký thành công";
+                        MvcCaptcha.ResetCaptcha("registerCaptcha");
                         var models = db.Users.SingleOrDefault(n => n.Username == model.UserName);
                         return RedirectToAction("Card", new { UserId= models.UserId });
                     }
@@ -112,8 +115,7 @@ namespace WebsiteNoiThat.Controllers
                     }
                 }
             }
-            model = new RegisterModel();
-            return View();
+            return View(model);
         }
 
         [HttpGet]
@@ -135,22 +137,93 @@ namespace WebsiteNoiThat.Controllers
         public ActionResult EditCurentUser()
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
+            if (session == null)
+            {
+                return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
             var model = db.Users.SingleOrDefault(n => n.UserId == session.UserId);
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult EditCurentUser([Bind(Include = "UserId,Name,Address,Phone,Username,Password,Email,GroupId,Status")] User user)
+        public ActionResult EditCurentUser([Bind(Include = "UserId,Name,Address,Phone,Username,Email,GroupId,Status")] User user)
         {
+            var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
+            if (session == null)
+            {
+                return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
             if (ModelState.IsValid)
             {
-                user.Password = Encryptor.MD5Hash(user.Password);
+                var existingUser = db.Users.AsNoTracking().FirstOrDefault(n => n.UserId == user.UserId && n.UserId == session.UserId);
+                if (existingUser == null)
+                {
+                    return RedirectToAction("ViewCurentUser");
+                }
+
+                user.Password = existingUser.Password;
                 db.Entry(user).State = EntityState.Modified;
                 db.SaveChanges();
                 return RedirectToAction("ViewCurentUser");
             }
             return View(user);
+        }
+
+        [HttpGet]
+        public ActionResult ChangePassword()
+        {
+            var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
+            if (session == null)
+            {
+                return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ChangePassword(ChangePasswordModel model)
+        {
+            var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
+            if (session == null)
+            {
+                return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = db.Users.Find(session.UserId);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
+            var oldPasswordHash = Encryptor.MD5Hash(model.OldPassword);
+            if (!string.Equals(user.Password?.Trim(), oldPasswordHash, StringComparison.Ordinal) &&
+                !string.Equals(user.Password?.Trim(), model.OldPassword, StringComparison.Ordinal))
+            {
+                ModelState.AddModelError("", "Mật khẩu cũ không chính xác.");
+                return View(model);
+            }
+
+            if (string.Equals(model.OldPassword, model.NewPassword, StringComparison.Ordinal))
+            {
+                ModelState.AddModelError("", "Mật khẩu mới không được trùng với mật khẩu cũ.");
+                return View(model);
+            }
+
+            user.Password = Encryptor.MD5Hash(model.NewPassword);
+            db.SaveChanges();
+            ViewBag.Success = "Đổi mật khẩu thành công!";
+            ModelState.Clear();
+            return View();
         }
 
         [HttpGet]

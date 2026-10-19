@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,44 +27,41 @@ namespace WebsiteNoiThat.Controllers
         }
         
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Contacts(EmailModel obj)
         {
+            if (string.IsNullOrWhiteSpace(obj.EmailCC))
+            {
+                ViewBag.Error = "Vui lòng nhập địa chỉ email của bạn để chúng tôi có thể gửi phản hồi hỗ trợ.";
+                return View(obj);
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.EMailBody))
+            {
+                ViewBag.Error = "Vui lòng nhập nội dung cần hỗ trợ.";
+                return View(obj);
+            }
+
             try
             {
-                //Configuring webMail class to send emails  
-                //gmail smtp server  
-                WebMail.SmtpServer = "smtp.gmail.com";
-                //gmail port to send emails  
-                WebMail.SmtpPort = 587;
-                WebMail.SmtpUseDefaultCredentials = true;
-                //sending emails with secure protocol  
-                WebMail.EnableSsl = true;
-                //EmailId used to send emails from application  
-                WebMail.UserName = "sam.deeplearning123@gmail.com";
-                WebMail.Password = "dangvansam98";
-
-                //Sender email address.  
-                WebMail.From = "SenderGamilId@gmail.com";
-
-                //Send email  
-                WebMail.Send(to: obj.ToEmail, subject: obj.EmailSubject, body: obj.EMailBody, cc: obj.EmailCC, bcc: obj.EmailBCC, isBodyHtml: true);
-                ViewBag.Status = "Email Sent Successfully.";
                 var model = new Contact();
-                model.Content = obj.EMailBody;
-                model.Status = true;
-                model.EmailCC = obj.EmailCC;
+                string title = string.IsNullOrWhiteSpace(obj.EmailSubject) ? "Hỗ trợ khách hàng" : obj.EmailSubject.Trim();
+                model.Content = $"[{title}] - {obj.EMailBody.Trim()}";
+                model.Status = false; // Chưa xử lý (chờ hỗ trợ)
+                model.EmailCC = obj.EmailCC.Trim();
                 db.Contacts.Add(model);
                 db.SaveChanges();
 
-                
+                ViewBag.Status = "Yêu cầu hỗ trợ của bạn đã được gửi thành công! Đội ngũ hỗ trợ sẽ phản hồi qua email của bạn trong thời gian sớm nhất.";
+                ModelState.Clear();
+                return View(new EmailModel());
             }
             catch (Exception)
             {
-                ViewBag.Status = "Problem while sending email, Please check details.";
-
+                ViewBag.Error = "Có lỗi xảy ra khi lưu yêu cầu hỗ trợ. Vui lòng thử lại sau.";
             }
-            return View();
-            
+
+            return View(obj);
         }
     }
 }
