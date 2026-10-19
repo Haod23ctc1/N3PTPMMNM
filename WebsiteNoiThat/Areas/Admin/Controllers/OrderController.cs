@@ -1,4 +1,4 @@
-﻿using Models.EF;
+using Models.EF;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -124,7 +124,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         }
 
         [HasCredential(RoleId = "VIEW_ORDER")]
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion_admin];
             ViewBag.username = session.Username;

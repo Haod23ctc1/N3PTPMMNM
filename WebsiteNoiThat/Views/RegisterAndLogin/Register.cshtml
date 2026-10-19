@@ -1,4 +1,5 @@
 ﻿@model WebsiteNoiThat.Models.RegisterModel
+@using BotDetect.Web.Mvc;
 @{
     ViewBag.Title = "Register";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -122,13 +123,18 @@
             </div>
         </div>
         <div class="form-group">
-            <div class="col-md-offset-3">
-
-                @*@Html.Captcha(registerCaptcha)
-                    @Html.TextBox("CaptchaCode")*@
-                @*@Html.Recaptcha()
-                @Html.ValidationMessage("ReCaptcha")*@
-
+            <label class="control-label col-md-2">Mã xác nhận</label>
+            <div class="col-md-10">
+                <link href="@BotDetect.Web.CaptchaUrls.Absolute.LayoutStyleSheetUrl" rel="stylesheet" type="text/css" />
+                @{
+                    MvcCaptcha registerCaptcha = new MvcCaptcha("registerCaptcha");
+                    registerCaptcha.UserInputID = "CaptchaCode";
+                }
+                @Html.Captcha(registerCaptcha)
+                <div style="margin-top: 10px; max-width: 280px;">
+                    @Html.TextBox("CaptchaCode", null, new { @class = "form-control", @placeholder = "Nhập mã captcha", @required = "required" })
+                    @Html.ValidationMessage("CaptchaCode", "", new { @class = "text-danger" })
+                </div>
             </div>
         </div>
 
