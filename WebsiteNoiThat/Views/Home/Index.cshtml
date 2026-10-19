@@ -5,6 +5,12 @@
 }
 
 <div class="boxmain">
+    @if (TempData["SearchError"] != null)
+    {
+        <div class="alert alert-warning text-center" role="alert">
+            @TempData["SearchError"]
+        </div>
+    }
     @Html.Action("NewProduct", "Product")
     @Html.Action("SaleProduct", "Product")
     @Html.Action("CateKorea", "Product")
