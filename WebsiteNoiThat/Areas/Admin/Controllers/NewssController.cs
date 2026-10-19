@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -19,7 +19,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         DBNoiThat db = new DBNoiThat();
 
         [HasCredential(RoleId = "VIEW_NEWS")]
-        public ActionResult Index()
+        public new ActionResult Index()
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion_admin];
             ViewBag.username = session.Username;
