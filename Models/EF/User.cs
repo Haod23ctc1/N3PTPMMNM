@@ -29,6 +29,7 @@
 
         [StringLength(32)]
         [DisplayName("Mật khẩu")]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
 
         [DisplayName("Email")]

@@ -188,6 +188,7 @@
     </Compile>
     <Compile Include="Models\CardModel.cs" />
     <Compile Include="Models\CartItem.cs" />
+    <Compile Include="Models\ChangePasswordModel.cs" />
     <Compile Include="Models\EmailModel.cs" />
     <Compile Include="Models\HistoryCart.cs" />
     <Compile Include="Models\LoginModel.cs" />
@@ -3129,6 +3130,7 @@
     <Content Include="Views\Cart\HistoryCart.cshtml" />
     <Content Include="Views\Cart\DeleteError.cshtml" />
     <Content Include="Views\RegisterAndLogin\Card.cshtml" />
+    <Content Include="Views\RegisterAndLogin\ChangePassword.cshtml" />
     <Content Include="Views\Product\SearchFocus.cshtml" />
     <Content Include="Views\News\Show.cshtml" />
     <Content Include="Views\Users\Create.cshtml" />

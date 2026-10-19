@@ -22,6 +22,7 @@ namespace WebsiteNoiThat.Models
         public string Username { get; set; }
 
         [StringLength(32)]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
         [Display(Name = "Email address")]
         [Required(ErrorMessage = "The email address is required")]

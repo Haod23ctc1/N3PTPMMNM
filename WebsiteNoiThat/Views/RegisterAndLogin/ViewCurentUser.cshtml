@@ -15,7 +15,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="password">Mật khẩu</label>
-                <input type="password" class="form-control" id="password" placeholder=@Model.Password>
+                <input type="password" class="form-control" id="password" value="••••••••" readonly>
             </div>
         </div>
         <div class="form-group">
@@ -53,5 +53,6 @@
             <a style="margin-left: 21px;">Trạng thái kích hoạt</a>
         </div>
         <fieldset disabled>
-            <button class="btn btn-warning"> <a href="/RegisterAndLogin/EditCurentUser">Sửa thông tin</a></button>
+            <button class="btn btn-warning"><a href="/RegisterAndLogin/EditCurentUser" style="color: inherit; text-decoration: none;">Sửa thông tin</a></button>
+            <a href="/RegisterAndLogin/ChangePassword" class="btn btn-primary" style="margin-left: 10px;">Đổi mật khẩu</a>
 </div>
