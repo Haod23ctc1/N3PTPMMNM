@@ -3112,6 +3112,7 @@
     <Content Include="Views\Product\NewProduct.cshtml" />
     <Content Include="Views\Product\Hots.cshtml" />
     <Content Include="Views\Product\ShowProduct.cshtml" />
+    <Content Include="Views\News\Index.cshtml" />
     <Content Include="Views\News\NewsHot.cshtml" />
     <Content Include="Views\CategoryProduct\Menu.cshtml" />
     <Content Include="Views\Product\DetailProduct.cshtml" />

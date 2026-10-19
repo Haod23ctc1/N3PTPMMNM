@@ -1,0 +1,95 @@
+@model List<Models.EF.News>
+@{
+    ViewBag.Title = "Tin tức";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Noidungmenu{
+    <h4>TIN TỨC</h4>
+    <div class="ct-boxmain row m0">
+        @{
+            if (Model == null || Model.Count == 0)
+            {
+                <div class="col-xs-12 text-center" style="padding:40px 15px;">
+                    <i class="fa fa-rss-square" style="font-size:60px;color:#ccc;" aria-hidden="true"></i>
+                    <h3 style="color:#555;">Chưa có bài tin tức nào</h3>
+                    <a href="/" class="btn btn-primary" style="margin-top:15px;">Về trang chủ</a>
+                </div>
+            }
+            else
+            {
+                int i = 0;
+                foreach (var item in Model)
+                {
+                    i++;
+                    string text = System.Text.RegularExpressions.Regex.Replace(item.Detail ?? "", "<.*?>", "");
+                    if (text.Length > 120)
+                    {
+                        text = text.Substring(0, 120).TrimEnd() + "...";
+                    }
+                    <div class="col-xs-6 col-sm-4 col-md-4 p5">
+                        <div class="boxsp" style="height:330px;">
+                            <div class="imgsp">
+                                <a href="/tin-tuc/@item.NewsId" title="@item.Title">
+                                    <img class="imgproduct" style="width:100%;height:200px;object-fit:cover;" src="@Url.Content("~/image/" + item.Photo)" alt="@item.Title">
+                                </a>
+                            </div>
+                            <div class="namesp">
+                                <a href="/tin-tuc/@item.NewsId">@item.Title</a>
+                            </div>
+                            <div style="padding:0 10px;color:#777;font-size:12px;">
+                                <i class="fa fa-calendar" aria-hidden="true"></i>
+                                @(item.DateUpdate.HasValue ? item.DateUpdate.Value.ToString("dd/MM/yyyy") : "")
+                            </div>
+                            <div style="padding:5px 10px;color:#555;font-size:13px;text-align:left;">
+                                @text
+                            </div>
+                            <div class="button-hd">
+                                <a href="/tin-tuc/@item.NewsId" title="Xem chi tiết"><i class="fa fa-eye" aria-hidden="true"></i> Xem thêm</a>
+                            </div>
+                        </div>
+                    </div>
+                    if (i % 3 == 0)
+                    {
+                        <div style="clear:both;"></div>
+                    }
+                }
+            }
+        }
+    </div>
+}
+
+@if (Model != null && Model.Count > 0 && ViewBag.Totalpage > 1)
+{
+    var pagedisplay = (int)(ViewBag.Maxpage);
+    int total = (int)ViewBag.Totalpage;
+    int currentpage = ((int)ViewBag.Page);
+    var startpage = Math.Max(1, currentpage - pagedisplay / 2);
+    var endpage = Math.Min(total, currentpage + pagedisplay / 2);
+    var link = "/tin-tuc?page=";
+    <nav>
+        <ul class="pagination">
+            @if (currentpage > 1)
+            {
+                <li><a href="@link@ViewBag.First" title="Trang đầu" class="first"><i class="fa fa-angle-double-left"></i> Trang đầu</a></li>
+                <li><a href="@link@ViewBag.Prev" title="Trang trước" class="prev"><i class="fa fa-angle-left"></i></a></li>
+            }
+            @for (int j = startpage; j <= endpage; j++)
+            {
+                if (currentpage == j)
+                {
+                    <li><a href="@link@j" class="active" title="Trang @j">@j</a></li>
+                }
+                else
+                {
+                    <li><a href="@link@j" class="pos" title="Trang @j">@j</a></li>
+                }
+            }
+            @if (currentpage < total)
+            {
+                <li><a href="@link@ViewBag.Next" title="Trang sau" class="next"><i class="fa fa-angle-right"></i></a></li>
+                <li><a href="@link@ViewBag.Last" title="Trang cuối" class="last"><i class="fa fa-angle-double-right"></i> Trang cuối</a></li>
+            }
+        </ul>
+    </nav>
+}

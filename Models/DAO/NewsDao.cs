@@ -14,6 +14,16 @@ namespace Models.DAO
         {
             return db.News.Take(4).ToList();
         }
+
+        public List<News> ListAll()
+        {
+            return db.News.OrderByDescending(n => n.DateUpdate).ToList();
+        }
+
+        public News GetById(int id)
+        {
+            return db.News.SingleOrDefault(n => n.NewsId == id);
+        }
         public bool Update(News entity, bool autoSave = true)
         {
             try
