@@ -71,7 +71,7 @@ namespace WebsiteNoiThat
             routes.MapRoute(
               name: "Register",
               url: "dang-ky",
-              defaults: new { controller = "User", action = "Register", id = UrlParameter.Optional },
+              defaults: new { controller = "RegisterAndLogin", action = "Register", id = UrlParameter.Optional },
               namespaces: new[] { "WebsiteNoiThat.Controllers" }
           );
             routes.MapRoute(
