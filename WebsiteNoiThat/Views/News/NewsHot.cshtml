@@ -5,11 +5,9 @@
 {
 
     <div class="item tintucl">
-        <a href="/News/Show?NewsId=@sp.NewsId"><img src="@Url.Content("~/image/" + sp.Photo)" alt="" /></a>
-        <p><a href="">@sp.Title</a></p>
-       
+        <a href="/tin-tuc/@sp.NewsId"><img src="@Url.Content("~/image/" + sp.Photo)" alt="@sp.Title" /></a>
+        <p><a href="/tin-tuc/@sp.NewsId" title="@sp.Title">@sp.Title</a></p>
+
     </div>
 }
-
-
 
