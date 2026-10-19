@@ -28,6 +28,7 @@
             <div class="col-md-10">
                 @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control",@required = "" } })
                 @Html.ValidationMessageFor(model => model.Name, "", new { @class = "text-danger" })
+                @Html.ValidationMessage("NameError", new { @class = "text-danger" })
             </div>
         </div>
 
@@ -42,7 +43,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.ParId, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.EditorFor(model => model.ParId, new { htmlAttributes = new { @class = "form-control", @required = "" } })
+                @Html.DropDownListFor(model => model.ParId, (SelectList)ViewBag.Parents, "-- Không có (danh mục gốc) --", new { @class = "form-control" })
                 @Html.ValidationMessageFor(model => model.ParId, "", new { @class = "text-danger" })
             </div>
         </div>
