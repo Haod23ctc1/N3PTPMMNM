@@ -169,9 +169,23 @@
         </h4>
     </div>
 
-    <h3 class="contact-title">GỬI THÔNG TIN LIÊN HỆ</h3>
+    <h3 class="contact-title"><i class="glyphicon glyphicon-envelope"></i> GỬI YÊU CẦU HỖ TRỢ KHÁCH HÀNG</h3>
 
-    @using (Html.BeginForm())
+    @if (ViewBag.Status != null)
+    {
+        <div class="alert alert-success" style="font-size: 15px; margin-bottom: 20px;">
+            <i class="glyphicon glyphicon-ok-sign"></i> @ViewBag.Status
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger" style="font-size: 15px; margin-bottom: 20px;">
+            <i class="glyphicon glyphicon-exclamation-sign"></i> @ViewBag.Error
+        </div>
+    }
+
+    @using (Html.BeginForm("Contacts", "Contact", FormMethod.Post))
     {
         @Html.AntiForgeryToken()
 
@@ -180,81 +194,37 @@
             @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
             <div class="form-group">
-                @Html.LabelFor(model => model.ToEmail,
-                    htmlAttributes: new { @class = "control-label col-md-2" })
-
+                <label class="control-label col-md-2" for="EmailCC">Email của bạn: <span class="text-danger">*</span></label>
                 <div class="col-md-10">
-                    @Html.EditorFor(model => model.ToEmail,
-                        new { htmlAttributes = new { @class = "form-control" } })
-
-                    @Html.ValidationMessageFor(model => model.ToEmail,
-                        "", new { @class = "text-danger" })
+                    @Html.TextBoxFor(model => model.EmailCC,
+                        new { @class = "form-control", @placeholder = "Nhập email của bạn để chúng tôi phản hồi...", @type = "email", @required = "required" })
+                    @Html.ValidationMessageFor(model => model.EmailCC, "", new { @class = "text-danger" })
                 </div>
             </div>
 
             <div class="form-group">
-                @Html.LabelFor(model => model.EMailBody,
-                    htmlAttributes: new { @class = "control-label col-md-2" })
+                <label class="control-label col-md-2" for="EmailSubject">Tiêu đề hỗ trợ:</label>
+                <div class="col-md-10">
+                    @Html.TextBoxFor(model => model.EmailSubject,
+                        new { @class = "form-control", @placeholder = "Ví dụ: Tư vấn mua hàng, hỏi tiến độ đơn hàng, bảo hành..." })
+                    @Html.ValidationMessageFor(model => model.EmailSubject, "", new { @class = "text-danger" })
+                </div>
+            </div>
 
+            <div class="form-group">
+                <label class="control-label col-md-2" for="EMailBody">Nội dung hỗ trợ: <span class="text-danger">*</span></label>
                 <div class="col-md-10">
                     @Html.TextAreaFor(model => model.EMailBody,
-                        new { @class = "form-control", rows = "5" })
-
-                    @Html.ValidationMessageFor(model => model.EMailBody,
-                        "", new { @class = "text-danger" })
-                </div>
-            </div>
-
-            <div class="form-group">
-                @Html.LabelFor(model => model.EmailSubject,
-                    htmlAttributes: new { @class = "control-label col-md-2" })
-
-                <div class="col-md-10">
-                    @Html.EditorFor(model => model.EmailSubject,
-                        new { htmlAttributes = new { @class = "form-control" } })
-
-                    @Html.ValidationMessageFor(model => model.EmailSubject,
-                        "", new { @class = "text-danger" })
-                </div>
-            </div>
-
-            <div class="form-group">
-                @Html.LabelFor(model => model.EmailCC,
-                    htmlAttributes: new { @class = "control-label col-md-2" })
-
-                <div class="col-md-10">
-                    @Html.EditorFor(model => model.EmailCC,
-                        new { htmlAttributes = new { @class = "form-control" } })
-
-                    @Html.ValidationMessageFor(model => model.EmailCC,
-                        "", new { @class = "text-danger" })
-                </div>
-            </div>
-
-            <div class="form-group">
-                @Html.LabelFor(model => model.EmailBCC,
-                    htmlAttributes: new { @class = "control-label col-md-2" })
-
-                <div class="col-md-10">
-                    @Html.EditorFor(model => model.EmailBCC,
-                        new { htmlAttributes = new { @class = "form-control" } })
-
-                    @Html.ValidationMessageFor(model => model.EmailBCC,
-                        "", new { @class = "text-danger" })
+                        new { @class = "form-control", @rows = "5", @placeholder = "Mô tả chi tiết câu hỏi hoặc yêu cầu cần hỗ trợ của bạn...", @required = "required" })
+                    @Html.ValidationMessageFor(model => model.EMailBody, "", new { @class = "text-danger" })
                 </div>
             </div>
 
             <div class="form-group">
                 <div class="col-md-offset-2 col-md-10">
-                    <input type="submit"
-                           value="Send"
-                           class="btn btn-primary contact-submit" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="col-md-offset-2 col-md-10 text-success">
-                    @ViewBag.Status
+                    <button type="submit" class="btn btn-primary contact-submit" style="font-size: 15px; font-weight: bold;">
+                        <i class="glyphicon glyphicon-send"></i> Gửi yêu cầu hỗ trợ
+                    </button>
                 </div>
             </div>
 
