@@ -9,6 +9,20 @@
     <h4>Kết quả tìm kiếm theo từ khóa: @ViewBag.Keyword</h4>
     <div class="ct-boxmain row m0">
         @{ int i = 0;
+            if (Model == null || Model.Count == 0)
+            {
+                <div class="col-xs-12 text-center" style="padding:40px 15px;">
+                    <i class="fa fa-search" style="font-size:60px;color:#ccc;" aria-hidden="true"></i>
+                    <h3 style="color:#555;">Không tìm thấy sản phẩm nào</h3>
+                    <p style="color:#777;">
+                        Không có sản phẩm nào phù hợp với từ khóa "<b style="color:#555;">@ViewBag.Keyword</b>".
+                        <br />Vui lòng kiểm tra lại chính tả hoặc thử từ khóa khác.
+                    </p>
+                    <a href="/" class="btn btn-primary" style="margin-top:15px;">Về trang chủ</a>
+                </div>
+            }
+            else
+            {
             foreach (var sp in Model)
             {
                 i++;
@@ -69,6 +83,7 @@
 
 
 
+            }
             }
         }
 
