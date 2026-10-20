@@ -6,29 +6,39 @@ using System.Threading.Tasks;
 using Models.EF;
 namespace Models.DAO
 {
-   
-    public class ProductDao
+
+    public class ProductDao : IDisposable
     {
-        
-         DBNoiThat db  = new DBNoiThat();
-       
+        private DBNoiThat db = new DBNoiThat();
+
         public List<Product> ListSanPham()
         {
             return db.Products.ToList();
         }
+
+        // Lay san pham moi theo danh muc, khong tinh san pham dang giam gia
+        private List<Product> ProductByCategory(int cateId, int take)
+        {
+            return db.Products
+                .Where(n => n.Discount == 0 || n.EndDate < DateTime.Now || n.StartDate > DateTime.Now)
+                .Where(n => n.CateId == cateId)
+                .Take(take)
+                .ToList();
+        }
+
         public List<Product> CateKorea()
         {
-            return db.Products.Where(n => n.Discount == 0 || n.EndDate < DateTime.Now || n.StartDate > DateTime.Now).Where(n => n.CateId== 9).Take(4).ToList();
+            return ProductByCategory(9, 4);
         }
         public List<Product> CateHavana()
         {
-            return db.Products.Where(n => n.Discount == 0 || n.EndDate < DateTime.Now || n.StartDate > DateTime.Now).Where(n => n.CateId == 8).Take(4).ToList();
+            return ProductByCategory(8, 4);
         }
         public List<ProductView> ProductHot()
         {
             var model = (from a in db.Products
                          join b in db.OrderDetails on a.ProductId equals b.ProductId
-                         group b by new { a.Description,a.ProductId,a.Photo,a.Price,a.Discount,a.EndDate,a.StartDate } 
+                         group b by new { a.Description,a.ProductId,a.Photo,a.Price,a.Discount,a.EndDate,a.StartDate }
                          into g
                          select new ProductView
                          {
@@ -39,18 +49,18 @@ namespace Models.DAO
                             StartDate=g.Key.StartDate,
                             EndDate=g.Key.EndDate,
                             Photo=g.Key.Photo,
-                          
+
                             Quantity = g.Sum(s => s.Quantity),
 
                          }).OrderByDescending(n => n.Quantity).Take(6).ToList();
            return model;
         }
 
-        public List<Product> SaleProduct() { 
+        public List<Product> SaleProduct() {
             var model = db.Products.Where(n => n.Discount > 0 ).OrderByDescending(n => n.Discount).Take(8).ToList();
             return model;
         }
-        
+
         public List<Product> NewProduct()
         {
             return db.Products.Where(n => n.Discount == 0 || n.EndDate < DateTime.Now|| n.StartDate > DateTime.Now).OrderByDescending(n=>n.StartDate).Take(8).ToList();
@@ -59,9 +69,9 @@ namespace Models.DAO
         {
            return db.Products.SingleOrDefault(n => n.ProductId == Id);
         }
-        
+
         //in ra loai san pham
-       
+
         public List<Product> ListByCategoryId(int cateId, ref int total, int pageindex = 1, int pagesize = 12)
         {
             total = db.Products.Where(x => x.CateId == cateId).Count();
@@ -70,7 +80,7 @@ namespace Models.DAO
         }
         public List<string> ListName(string keyword)
         {
-        
+
             return db.Products.Where(n => n.Name.Contains(keyword)).Select(n => n.Name).Distinct().ToList();
         }
         public List<Product> Search(string keyword, ref int total, int pageindex = 1, int pagesize = 12)
@@ -101,7 +111,15 @@ namespace Models.DAO
             }
         }
 
-
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
+        }
     }
-    
+
 }

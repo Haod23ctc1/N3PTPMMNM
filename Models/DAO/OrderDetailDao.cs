@@ -7,12 +7,21 @@ using System.Threading.Tasks;
 
 namespace Models.DAO
 {
-   public class OrderDetailDao
+   public class OrderDetailDao : IDisposable
     {
         DBNoiThat db = null;
         public OrderDetailDao()
         {
             db = new DBNoiThat();
+        }
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
         }
         public bool Insert(OrderDetail orderDetail)
         {

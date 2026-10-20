@@ -8,9 +8,20 @@ using WebsiteNoiThat.Common;
 
 namespace Models.DAO
 {
-   public class UserDao
+   public class UserDao : IDisposable
     {
         DBNoiThat db = new DBNoiThat();
+
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
+        }
+
         public int Insert(User acount)
         {
             db.Users.Add(acount);
