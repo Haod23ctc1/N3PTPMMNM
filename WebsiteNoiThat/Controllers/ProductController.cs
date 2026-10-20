@@ -52,7 +52,8 @@ namespace WebsiteNoiThat.Controllers
             if (model == null)
             {
                 Response.StatusCode = 404;
-                return null;
+                Response.TrySkipIisCustomErrors = true;
+                return View("NotFound");
             }
             return View(model);
 
