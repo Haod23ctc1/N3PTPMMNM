@@ -5,9 +5,19 @@ using Models.EF;
 
 namespace Models.DAO
 {
-    public class CategoryDao
+    public class CategoryDao : IDisposable
     {
         DBNoiThat db = new DBNoiThat();
+
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
+        }
         // public List<Category> 
         public List<Category> ListCategory()
         {

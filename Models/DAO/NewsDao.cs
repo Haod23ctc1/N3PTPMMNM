@@ -6,9 +6,19 @@ using System.Threading.Tasks;
 using Models.EF;
 namespace Models.DAO
 {
-  public  class NewsDao
+  public  class NewsDao : IDisposable
     {
         DBNoiThat db = new DBNoiThat();
+
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
+        }
 
         public List<News> NewsHot()
         {

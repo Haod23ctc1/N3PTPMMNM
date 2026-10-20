@@ -7,12 +7,21 @@ using System.Threading.Tasks;
 
 namespace Models.DAO
 {
-  public  class OrderDao
+  public  class OrderDao : IDisposable
     {
        DBNoiThat db = null;
         public OrderDao()
         {
             db = new DBNoiThat();
+        }
+        public void Dispose()
+        {
+            if (db != null)
+            {
+                db.Dispose();
+                db = null;
+            }
+            GC.SuppressFinalize(this);
         }
         public int Insert(Order order)
         {
