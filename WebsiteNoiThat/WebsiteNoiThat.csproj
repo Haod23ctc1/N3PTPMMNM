@@ -3106,7 +3106,11 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Home\PaymentPolicy.cshtml" />
+    <Content Include="Views\Home\Rules.cshtml" />
+    <Content Include="Views\Home\ShippingPolicy.cshtml" />
     <Content Include="Views\Product\CateHavana.cshtml" />
     <Content Include="Views\Product\CateKorea.cshtml" />
     <Content Include="Views\Product\NewProduct.cshtml" />
