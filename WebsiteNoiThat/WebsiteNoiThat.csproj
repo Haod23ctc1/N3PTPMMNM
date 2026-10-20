@@ -3123,6 +3123,7 @@
     <Content Include="Views\Product\CategoryShow.cshtml" />
     <Content Include="Views\Product\Search.cshtml" />
     <Content Include="Views\RegisterAndLogin\Register.cshtml" />
+    <Content Include="Views\Contact\Lookup.cshtml" />
     <Content Include="Views\Contact\Contacts.cshtml" />
     <Content Include="Views\RegisterAndLogin\Login.cshtml" />
     <Content Include="Views\Cart\Success.cshtml" />

@@ -93,6 +93,12 @@ namespace WebsiteNoiThat
               namespaces: new[] { "WebsiteNoiThat.Controllers" }
           );
             routes.MapRoute(
+              name: "SupportLookup",
+              url: "tra-cuu-ho-tro",
+              defaults: new { controller = "Contact", action = "Lookup", id = UrlParameter.Optional },
+              namespaces: new[] { "WebsiteNoiThat.Controllers" }
+          );
+            routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional },
