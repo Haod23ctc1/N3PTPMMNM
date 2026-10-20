@@ -63,5 +63,31 @@ namespace WebsiteNoiThat.Controllers
 
             return View(obj);
         }
+
+        // GET: trang tra cuu yeu cau ho tro
+        [HttpGet]
+        public ActionResult Lookup()
+        {
+            return View();
+        }
+
+        // POST: tra cuu theo email khach hang
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Lookup(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ViewBag.Error = "Vui lòng nhập email để tra cứu yêu cầu hỗ trợ.";
+                return View();
+            }
+            email = email.Trim();
+            var list = db.Contacts
+                         .Where(c => c.EmailCC.ToLower() == email.ToLower())
+                         .OrderByDescending(c => c.ContactId)
+                         .ToList();
+            ViewBag.Email = email;
+            return View(list);
+        }
     }
 }

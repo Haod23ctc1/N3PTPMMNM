@@ -1,0 +1,140 @@
+@model List<Models.EF.Contact>
+@{
+    ViewBag.Title = "Tra cứu yêu cầu hỗ trợ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .lookup-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .lookup-form {
+        background: #fff;
+        border-left: 4px solid #d9534f;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+
+    .lookup-item {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .lookup-title {
+        font-weight: 600;
+        color: #d9534f;
+        font-size: 15px;
+    }
+
+    .lookup-status-wait {
+        float: right;
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+        border-radius: 12px;
+        padding: 2px 10px;
+        font-size: 12px;
+    }
+
+    .lookup-status-done {
+        float: right;
+        background: #e6f4ea;
+        color: #1e7e34;
+        border: 1px solid #bfe3c8;
+        border-radius: 12px;
+        padding: 2px 10px;
+        font-size: 12px;
+    }
+
+    .lookup-content {
+        margin-top: 10px;
+        font-size: 13.5px;
+        color: #444;
+        white-space: pre-wrap;
+        line-height: 1.7;
+        background: #fafafa;
+        border-radius: 4px;
+        padding: 10px;
+    }
+</style>
+
+@section Noidungmenu{
+    <div class="lookup-page" style="text-align:left;">
+        <h3 style="margin-top:10px;text-align:center;">TRA CỨU YÊU CẦU HỖ TRỢ</h3>
+        <p style="text-align:center;color:#777;font-size:13px;">
+            Nhập email bạn đã dùng khi gửi yêu cầu để xem trạng thái và phản hồi của shop.
+        </p>
+
+        <div class="lookup-form">
+            @using (Html.BeginForm("Lookup", "Contact", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="input-group">
+                    <input type="email" name="email" class="form-control" placeholder="Nhập email của bạn (ví dụ: ten@gmail.com)" value="@(ViewBag.Email)" required />
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-danger" style="background:#d9534f;border:none;">
+                            <i class="fa fa-search" aria-hidden="true"></i> Tra cứu
+                        </button>
+                    </span>
+                </div>
+            }
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-warning" style="font-size:14px;">
+                <i class="glyphicon glyphicon-exclamation-sign"></i> @ViewBag.Error
+            </div>
+        }
+
+        @if (ViewBag.Email != null)
+        {
+            if (Model == null || Model.Count == 0)
+            {
+                <div class="alert alert-info" style="font-size:14px;">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                    Không tìm thấy yêu cầu hỗ trợ nào với email <b>@ViewBag.Email</b>.
+                    <a href="/Contact/Contacts">Gửi yêu cầu hỗ trợ mới</a>
+                </div>
+            }
+            else
+            {
+                <p style="color:#555;font-size:13px;">Tìm thấy <b>@Model.Count</b> yêu cầu của bạn (mới nhất trước):</p>
+                foreach (var item in Model)
+                {
+                    <div class="lookup-item">
+                        @if (item.Status == true)
+                        {
+                            <span class="lookup-status-done"><i class="fa fa-check-circle" aria-hidden="true"></i> Đã phản hồi</span>
+                        }
+                        else
+                        {
+                            <span class="lookup-status-wait"><i class="fa fa-hourglass-half" aria-hidden="true"></i> Đang chờ xử lý</span>
+                        }
+                        <div class="lookup-title">Yêu cầu #@item.ContactId</div>
+                        <div class="lookup-content">@item.Content</div>
+                    </div>
+                }
+                <p style="text-align:center;margin-top:15px;">
+                    <a href="/Contact/Contacts" class="btn btn-default">Gửi thêm yêu cầu</a>
+                </p>
+            }
+        }
+        else if (ViewBag.Error == null)
+        {
+            <div class="alert alert-default" style="font-size:13px;color:#888;text-align:center;border:1px dashed #ddd;">
+                <i class="fa fa-life-ring" aria-hidden="true"></i>
+                Mẹo: sau khi shop phản hồi, trạng thái yêu cầu sẽ chuyển sang <b style="color:#1e7e34;">Đã phản hồi</b>.
+                Hotline hỗ trợ: <b>0968 012 687</b>
+            </div>
+        }
+    </div>
+}

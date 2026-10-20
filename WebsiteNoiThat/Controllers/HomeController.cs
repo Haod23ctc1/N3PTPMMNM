@@ -14,6 +14,34 @@ namespace WebsiteNoiThat.Controllers
         {
             return View();
         }
+
+        // Trang tĩnh: Giới thiệu
+        public ActionResult About()
+        {
+            ViewBag.Title = "Giới thiệu";
+            return View();
+        }
+
+        // Trang tĩnh: Chính sách & Quy định
+        public ActionResult Rules()
+        {
+            ViewBag.Title = "Chính sách & Quy định";
+            return View();
+        }
+
+        // Trang tĩnh: Chính sách vận chuyển
+        public ActionResult ShippingPolicy()
+        {
+            ViewBag.Title = "Chính sách vận chuyển";
+            return View();
+        }
+
+        // Trang tĩnh: Chính sách thanh toán
+        public ActionResult PaymentPolicy()
+        {
+            ViewBag.Title = "Chính sách thanh toán";
+            return View();
+        }
         [ChildActionOnly]
         public PartialViewResult HeaderCart()
         {
