@@ -5,6 +5,22 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+<style>
+    /* Nút hiện/ẩn mật khẩu trong input-group */
+    .input-group-btn .toggle-password {
+        border: 1px solid #ccc;
+        border-left: none;
+        color: #6c757d;
+        height: 34px;
+        padding: 6px 10px;
+        line-height: 1.2;
+    }
+
+        .input-group-btn .toggle-password:hover {
+            color: #333;
+            background: #f5f5f5;
+        }
+</style>
 @using (Html.BeginForm("Register", "RegisterAndLogin", FormMethod.Post))
 
 {
@@ -52,6 +68,11 @@
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
                     @Html.PasswordFor(model => model.Password, new { @class = "form-control", @required = "" })
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default toggle-password" data-target="#Password" aria-label="Hiện mật khẩu">
+                            <span class="glyphicon glyphicon-eye-open"></span>
+                        </button>
+                    </span>
                     @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -65,6 +86,11 @@
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
                     @Html.PasswordFor(model => model.ConfirmPassword, new { @class = "form-control", @required = "" })
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default toggle-password" data-target="#ConfirmPassword" aria-label="Hiện mật khẩu">
+                            <span class="glyphicon glyphicon-eye-open"></span>
+                        </button>
+                    </span>
                     @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -149,6 +175,24 @@
     </div>
 
 }
+
+<script>
+    // Toggle hiện/ẩn mật khẩu
+    document.querySelectorAll('.toggle-password').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.querySelector(btn.getAttribute('data-target'));
+            if (!input) return;
+            var isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            var icon = btn.querySelector('.glyphicon');
+            if (icon) {
+                icon.classList.toggle('glyphicon-eye-open', !isHidden);
+                icon.classList.toggle('glyphicon-eye-slash', isHidden);
+            }
+            btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+        });
+    });
+</script>
 @*<div style="text-align:center">
     <a href="/RegisterAndLogin/Login"> <input type="submit" value="Đăng nhập" class="btn btn-info" /></a>
 </div>*@
