@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<botdetect>
+  <captchaStyles>
+    <!-- Captcha cho trang đăng nhập khách hàng -->
+    <captchaStyle name="loginCaptcha">
+      <userInputID>CaptchaCode</userInputID>
+    </captchaStyle>
+    <!-- Captcha cho trang đăng ký -->
+    <captchaStyle name="registerCaptcha">
+      <userInputID>CaptchaCode</userInputID>
+    </captchaStyle>
+  </captchaStyles>
+</botdetect>
+

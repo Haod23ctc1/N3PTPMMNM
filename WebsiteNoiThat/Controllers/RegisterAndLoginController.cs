@@ -1,10 +1,12 @@
-using BotDetect.Web.Mvc;
-using Models.DAO;
+﻿using Models.DAO;
 using Models.EF;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.Entity;
 using System.Linq;
+using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using WebsiteNoiThat.Areas.Admin.Models;
@@ -15,29 +17,76 @@ namespace WebsiteNoiThat.Controllers
 {
     public class RegisterAndLoginController : Controller
     {
-        // GET: RegisterAndLogin
-        DBNoiThat db = new DBNoiThat();
+        private DBNoiThat db = new DBNoiThat();
 
+        #region Helper: Kiểm tra xác minh "Tôi không phải là robot"
+        /// <summary>
+        /// Hàm kiểm tra Captcha: Hỗ trợ xác thực Google reCAPTCHA v2 và checkbox dự phòng
+        /// </summary>
+        private bool ValidateRobotCaptcha()
+        {
+            string googleCaptchaToken = Request["g-recaptcha-response"];
+
+            // 1. Nếu có token từ Google reCAPTCHA
+            if (!string.IsNullOrEmpty(googleCaptchaToken))
+            {
+                try
+                {
+                    string secretKey = ConfigurationManager.AppSettings["GoogleReCaptchaSecretKey"] 
+                                       ?? "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"; // Key test mặc định của Google
+                    
+                    using (var client = new WebClient())
+                    {
+                        string verifyUrl = string.Format("https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}", secretKey, googleCaptchaToken);
+                        string response = client.DownloadString(verifyUrl);
+                        var json = JObject.Parse(response);
+                        return (bool)json["success"];
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            // 2. Dự phòng: Nếu view đang dùng checkbox html thông thường (name="IsNotRobot")
+            if (Request.Form["IsNotRobot"] == "true")
+            {
+                return true;
+            }
+
+            return false;
+        }
+        #endregion
+
+        // ==================== 1. ĐĂNG XUẤT ====================
         public ActionResult Logout()
         {
             Session[Commoncontent.user_sesion] = null;
             Session[Commoncontent.CartSession] = null;
             return Redirect("/");
         }
-        
+
+        // ==================== 2. ĐĂNG NHẬP ====================
         [HttpGet]
         public ActionResult Login()
         {
-            return PartialView();
+            return View();
         }
+
         [HttpPost]
-        [CaptchaValidation("CaptchaCode", "loginCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Login(Models.LoginModel model)
         {
+            // Kiểm tra "Tôi không phải là robot"
+            if (!ValidateRobotCaptcha())
+            {
+                ModelState.AddModelError("", "Vui lòng xác nhận bạn không phải là robot!");
+                return View(model);
+            }
+
             if (ModelState.IsValid)
             {
                 var dao = new UserDao();
-                //var result = dao.Login(model.UserName, model.Password);
                 var result = dao.Login(model.UserName, Encryptor.MD5Hash(model.Password));
 
                 if (result == 1)
@@ -47,47 +96,48 @@ namespace WebsiteNoiThat.Controllers
                     userSession.Username = user.Username;
                     userSession.UserId = user.UserId;
                     Session.Add(Commoncontent.user_sesion, userSession);
-                    MvcCaptcha.ResetCaptcha("loginCaptcha");
                     return Redirect("/");
                 }
                 else if (result == -1)
                 {
-                    ModelState.AddModelError("", "Tài Khoản đang bị khóa, liên hệ admin");
-
+                    ModelState.AddModelError("", "Tài khoản đang bị khóa, liên hệ admin.");
                 }
                 else if (result == 0)
                 {
-                    ModelState.AddModelError("", "Tài khoản không tồn tại");
+                    ModelState.AddModelError("", "Tài khoản không tồn tại.");
                 }
                 else if (result == -2)
                 {
-                    ModelState.AddModelError("", "Mật khẩu không đúng");
+                    ModelState.AddModelError("", "Mật khẩu không đúng.");
                 }
             }
             return View(model);
         }
+
+        // ==================== 3. ĐĂNG KÝ ====================
         [HttpGet]
-        
         public ActionResult Register()
         {
-            return PartialView();
+            return View();
         }
 
         [HttpPost]
-        [CaptchaValidation("CaptchaCode", "registerCaptcha", "Mã xác nhận không đúng!")]
         public ActionResult Register(RegisterModel model)
         {
-            if(ModelState.IsValid)
+            // Kiểm tra "Tôi không phải là robot" thay thế BotDetect cũ
+            if (!ValidateRobotCaptcha())
+            {
+                ModelState.AddModelError("", "Vui lòng xác nhận bạn không phải là robot!");
+                return View(model);
+            }
+
+            if (ModelState.IsValid)
             {
                 var dao = new UserDao();
                 if (dao.CheckUserName(model.UserName))
                 {
-                    ModelState.AddModelError("", "Tên đăng nhập đã tồn tại");
+                    ModelState.AddModelError("", "Tên đăng nhập đã tồn tại.");
                 }
-                //else if (dao.CheckEmail(model.Email))
-                //{
-                //    ModelState.AddModelError("", "Email đã tồn tại");
-                //}
                 else
                 {
                     var user = new User();
@@ -98,16 +148,14 @@ namespace WebsiteNoiThat.Controllers
                     user.Address = model.Address;
                     user.Name = model.Name;
                     user.GroupId = "USER";
-
                     user.Status = true;
 
                     var result = dao.Insert(user);
                     if (result > 0)
                     {
                         ViewBag.Success = "Đăng ký thành công";
-                        MvcCaptcha.ResetCaptcha("registerCaptcha");
                         var models = db.Users.SingleOrDefault(n => n.Username == model.UserName);
-                        return RedirectToAction("Card", new { UserId= models.UserId });
+                        return RedirectToAction("Card", new { UserId = models.UserId });
                     }
                     else
                     {
@@ -118,6 +166,53 @@ namespace WebsiteNoiThat.Controllers
             return View(model);
         }
 
+        // ==================== 4. QUÊN MẬT KHẨU ====================
+        [HttpGet]
+        public ActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult ForgotPassword(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                email = Request.Form["Email"];
+            }
+
+            if (!ValidateRobotCaptcha())
+            {
+                ModelState.AddModelError("", "Vui lòng xác nhận bạn không phải là robot!");
+                ViewBag.Email = email;
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ModelState.AddModelError("", "Vui lòng nhập địa chỉ Email đăng ký!");
+                return View();
+            }
+
+            var user = db.Users.FirstOrDefault(x => x.Email == email.Trim());
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Địa chỉ Email này không tồn tại trong hệ thống.");
+                ViewBag.Email = email;
+                return View();
+            }
+
+            // Tạo mật khẩu ngẫu nhiên mới
+            string newPassword = new Random().Next(100000, 999999).ToString();
+            user.Password = Encryptor.MD5Hash(newPassword);
+            db.SaveChanges();
+
+            // Hiển thị trực tiếp mật khẩu mới lên màn hình (không cần gửi email)
+            ViewBag.Success = "Khôi phục thành công! Mật khẩu mới của tài khoản (" + user.Username + ") là: " + newPassword;
+
+            return View();
+        }
+        // ==================== 5. THÔNG TIN NGƯỜI DÙNG ====================
         [HttpGet]
         public ActionResult ViewCurentUser()
         {
@@ -172,6 +267,7 @@ namespace WebsiteNoiThat.Controllers
             return View(user);
         }
 
+        // ==================== 6. ĐỔI MẬT KHẨU ====================
         [HttpGet]
         public ActionResult ChangePassword()
         {
@@ -221,18 +317,17 @@ namespace WebsiteNoiThat.Controllers
 
             user.Password = Encryptor.MD5Hash(model.NewPassword);
             db.SaveChanges();
-            ViewBag.Success = "Đổi mật khẩu thành công!";
-            ModelState.Clear();
-            return View();
+
+            TempData["Success"] = "Đổi mật khẩu thành công!";
+            return RedirectToAction("Index", "Home");
         }
 
+        // ==================== 7. THẺ TÍCH ĐIỂM ====================
         [HttpGet]
         public ActionResult Card(int UserId)
-
         {
-           
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
-            if(session!=null)
+            if (session != null)
             {
                 var checkuser = db.Cards.SingleOrDefault(n => n.UserId == session.UserId);
                 if (checkuser == null)
@@ -245,19 +340,13 @@ namespace WebsiteNoiThat.Controllers
                         model.NumberCard = 0;
                         model.UserNumber = 0;
                         return View(model);
-
                     }
                     else
                     {
-                        //var model = new Card();
-                        //model.Username = session.Username;
-                        //model.NumberCard = 0;
-                        //model.UseNumber = 0;
                         var model = new Card();
                         model.UserId = session.UserId;
                         model.NumberCard = 0;
                         model.UserNumber = 0;
-                        
                         return View(model);
                     }
                 }
@@ -275,13 +364,12 @@ namespace WebsiteNoiThat.Controllers
                 model.UserNumber = 0;
                 return View(model);
             }
-           
-           
         }
+
         [HttpPost]
         public ActionResult Card(Card n)
         {
-            var model =new Card();
+            var model = new Card();
             model.UserId = n.UserId;
             model.NumberCard = 0;
             model.UserNumber = 0;
@@ -292,58 +380,51 @@ namespace WebsiteNoiThat.Controllers
             ViewBag.Success = "Đăng ký thẻ thành công";
             return Redirect("/");
         }
-        
+
+        // ==================== 8. XEM THÔNG TIN ĐĂNG NHẬP (HEADER/MENU) ====================
         public ActionResult ViewLogin()
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
-           if(session!=null)
+            if (session != null)
             {
                 var model = db.Cards.SingleOrDefault(n => n.UserId == session.UserId);
                 var models = (from a in db.OrderDetails
-                            join b in db.Orders
-                            on a.OrderId equals b.OrderId
-                            join c in db.Products
-                            on a.ProductId equals c.ProductId
-                            join d in db.Users on b.UserId equals d.UserId
-                            join e in db.Cards on d.UserId equals e.UserId
-                            where b.StatusId == 5 && e.UserId == session.UserId
-                            select new
-                            {
-                                ProductId = a.ProductId,
-                                Price = a.Price,
-                                Quantity = a.Quantity,
-                                Discount = c.Discount,
-                                NumberCard = e.NumberCard,
-                                Username = d.Username
-                            }).ToList();
-                    if (models.Count()==0)
+                              join b in db.Orders on a.OrderId equals b.OrderId
+                              join c in db.Products on a.ProductId equals c.ProductId
+                              join d in db.Users on b.UserId equals d.UserId
+                              join e in db.Cards on d.UserId equals e.UserId
+                              where b.StatusId == 5 && e.UserId == session.UserId
+                              select new
+                              {
+                                  ProductId = a.ProductId,
+                                  Price = a.Price,
+                                  Quantity = a.Quantity,
+                                  Discount = c.Discount,
+                                  NumberCard = e.NumberCard,
+                                  Username = d.Username
+                              }).ToList();
+
+                if (models.Count() == 0)
+                {
+                    ViewBag.Card = 0;
+                }
+                else
+                {
+                    double? total = 0;
+                    foreach (var item in models)
                     {
-                        ViewBag.Card = 0;
+                        total += ((item.Price.GetValueOrDefault(0) - (item.Price.GetValueOrDefault(0) * item.Discount.GetValueOrDefault(0) * 0.01)) * item.Quantity);
                     }
-                    else
+
+                    if (model != null)
                     {
-                        double? total = 0;
-                        foreach (var item in models)
-                        {
-                            total += ((item.Price.GetValueOrDefault(0) - (item.Price.GetValueOrDefault(0) * item.Discount.GetValueOrDefault(0) * 0.01)) * item.Quantity);
-                        }
-                      
-                        model.NumberCard = Convert.ToInt32(total / 1000)- model.UserNumber;
+                        model.NumberCard = Convert.ToInt32(total / 1000) - model.UserNumber;
                         db.SaveChanges();
                         ViewBag.Card = model.NumberCard;
                     }
-               
-            }
-           else
-            {
-                return PartialView();
+                }
             }
             return PartialView();
-
         }
-
-
-
-
     }
 }

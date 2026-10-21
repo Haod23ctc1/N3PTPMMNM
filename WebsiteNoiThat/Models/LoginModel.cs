@@ -9,7 +9,6 @@ namespace WebsiteNoiThat.Models
 {
     public class LoginModel
     {
-       
         [DisplayName("Tên đăng nhập")]
         [Required(ErrorMessage = "Bạn phải nhập tài khoản!")]
         public string UserName { get; set; }
@@ -17,5 +16,10 @@ namespace WebsiteNoiThat.Models
         [DisplayName("Mật khẩu")]
         [Required(ErrorMessage = "Bạn phải nhập mật khẩu!")]
         public string Password { get; set; }
+
+        public bool RememberMe { get; set; }
+        // Cần thiết để BotDetect bind và validate mã captcha từ form
+        public string CaptchaCode { get; set; }
+        
     }
 }
