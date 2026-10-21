@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout source code
@@ -23,18 +23,18 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore WebsiteNoiThat.sln
 
-      - name: Install .NET Framework 4.5.2 reference assemblies
+      - name: Install .NET Framework 4.8 reference assemblies
         shell: pwsh
         run: |
           $packageDir = "$env:RUNNER_TEMP\ReferenceAssemblies"
-          nuget install Microsoft.NETFramework.ReferenceAssemblies.net452 -Version 1.0.3 -OutputDirectory $packageDir
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net48 -Version 1.0.3 -OutputDirectory $packageDir
 
           $reference = Get-ChildItem $packageDir -Recurse -Filter mscorlib.dll |
-            Where-Object { $_.FullName -match '[\\/]v4\.5\.2[\\/]' } |
+            Where-Object { $_.FullName -match '[\\/]v4\.8[\\/]' } |
             Select-Object -First 1
 
           if (-not $reference) {
-            throw "Could not find .NET Framework 4.5.2 reference assemblies"
+            throw "Could not find .NET Framework 4.8 reference assemblies"
           }
 
           $frameworkRoot = Split-Path (Split-Path $reference.FullName -Parent) -Parent
@@ -42,7 +42,7 @@ jobs:
           "TargetFrameworkRootPath=$frameworkRoot" | Out-File $env:GITHUB_ENV -Append
 
       - name: Build solution
-        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release "/p:Platform=Any CPU" "/p:TargetFrameworkRootPath=$env:TargetFrameworkRootPath"
+        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Package website for deployment
         shell: pwsh
