@@ -42,7 +42,7 @@ jobs:
           "TargetFrameworkRootPath=$frameworkRoot" | Out-File $env:GITHUB_ENV -Append
 
       - name: Build solution
-        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release "/p:Platform=Any CPU" "/p:TargetFrameworkRootPath=$env:TargetFrameworkRootPath"
+        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Package website for deployment
         shell: pwsh
