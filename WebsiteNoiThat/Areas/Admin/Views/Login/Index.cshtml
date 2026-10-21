@@ -18,6 +18,29 @@
     <!-- Custom styles for this template-->
     <link href="~/Content/admin/css/sb-admin-2.min.css" rel="stylesheet">
 
+    <style>
+        /* Nút hiện/ẩn mật khẩu */
+        .password-field {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #6c757d;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .password-field .form-control-user {
+            padding-right: 38px;
+        }
+    </style>
+
 </head>
 
 <body class="bg-gradient-primary">
@@ -48,7 +71,12 @@
                                                 @Html.TextBoxFor(model => model.Username, new { @class = "form-control form-control-user", @id = "exampleInputEmail", @placeholder = "Tên đăng nhập", @autofocus = "autofocus" })
                                             </div>
                                             <div class="form-group">
-                                                @Html.TextBoxFor(model => model.Passwword, new { @class = "form-control form-control-user", @id = "exampleInputPassword", @placeholder = "Mật khẩu", type = "password" })
+                                                <div class="password-field position-relative">
+                                                    @Html.TextBoxFor(model => model.Passwword, new { @class = "form-control form-control-user", @id = "exampleInputPassword", @placeholder = "Mật khẩu", type = "password" })
+                                                    <button type="button" class="toggle-password" data-target="#exampleInputPassword" aria-label="Hiện mật khẩu">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="form-group">
                                                 <div class="custom-control custom-checkbox small">
@@ -94,6 +122,24 @@
 
     <!-- Custom scripts for all pages-->
     <script src="~/Content/admin/js/sb-admin-2.min.js"></script>
+
+    <!-- Toggle hiện/ẩn mật khẩu -->
+    <script>
+        document.querySelectorAll('.toggle-password').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.querySelector(btn.getAttribute('data-target'));
+                if (!input) return;
+                var isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                var icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', !isHidden);
+                    icon.classList.toggle('fa-eye-slash', isHidden);
+                }
+                btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+            });
+        });
+    </script>
 
 </body>
 </html>
