@@ -46,13 +46,13 @@
         </div>
 
         <div class="form-group">
-            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2" })
+            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2 " })
             <div class="col-md-10">
                 <div class="input-group">
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-user"></span>
                     </div>
-                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control", @required = "", @placeholder = "VD: nguyen_van_a (không dấu, không khoảng trắng)" })
+                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control ", @required = "", @placeholder = "VD: nguyen_van_a (không dấu, không khoảng trắng)" })
                     @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -161,11 +161,10 @@
     </div>
 }
 
-<!-- Thư viện và cấu hình kiểm tra tính hợp lệ dữ liệu (Client-side validation) -->
 <script src="~/Scripts/jquery.validate.min.js"></script>
 <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
 <script>
-    // Dịch các thông báo mặc định của thư viện sang tiếng Việt
+    // Dịch các thông báo mặc định của thư viện kiểm tra dữ liệu sang tiếng Việt
     window.addEventListener('load', function () {
         if (window.jQuery && window.jQuery.validator) {
             window.jQuery.extend(window.jQuery.validator.messages, {
@@ -191,6 +190,7 @@
             if (icon) {
                 icon.classList.toggle('glyphicon-eye-open', !isHidden);
                 icon.classList.toggle('glyphicon-eye-close', isHidden);
+                icon.classList.toggle('glyphicon-eye-slash', isHidden);
             }
             btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
         });
