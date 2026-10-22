@@ -91,7 +91,7 @@ namespace WebsiteNoiThat.Controllers
 
                 if (result == 1)
                 {
-                    var user = dao.GetById(model.UserName);
+                    var user = dao.GetUserForLogin(model.UserName);
                     var userSession = new UserLogin();
                     userSession.Username = user.Username;
                     userSession.UserId = user.UserId;
