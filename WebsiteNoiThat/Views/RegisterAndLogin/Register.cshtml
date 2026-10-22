@@ -1,10 +1,15 @@
 ﻿@model WebsiteNoiThat.Models.RegisterModel
-@using BotDetect.Web.Mvc;
+@using System.Configuration
 @{
     ViewBag.Title = "Register";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    string siteKey = ConfigurationManager.AppSettings["GoogleReCaptchaSiteKey"] ?? "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 }
+
+<!-- Thư viện Google reCAPTCHA (Hiển thị ngôn ngữ Tiếng Việt) -->
+<script src="https://www.google.com/recaptcha/api.js?hl=vi" async defer></script>
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+
 <style>
     /* Nút hiện/ẩn mật khẩu trong input-group */
     .input-group-btn .toggle-password {
@@ -16,15 +21,14 @@
         line-height: 1.2;
     }
 
-        .input-group-btn .toggle-password:hover {
-            color: #333;
-            background: #f5f5f5;
-        }
+    .input-group-btn .toggle-password:hover {
+        color: #333;
+        background: #f5f5f5;
+    }
 </style>
+
 @using (Html.BeginForm("Register", "RegisterAndLogin", FormMethod.Post))
-
 {
-
     @Html.AntiForgeryToken()
 
     <div class="form-horizontal">
@@ -44,21 +48,17 @@
         </div>
 
         <div class="form-group">
-
-
-            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2 " })
+            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
                 <div class="input-group">
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-user"></span>
                     </div>
-                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control ", @required = "" })
-
+                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control", @required = "", @placeholder = "VD: nguyen_van_a (không dấu, không khoảng trắng)" })
                     @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
                 </div>
             </div>
         </div>
-
 
         <div class="form-group">
             @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label col-md-2" })
@@ -67,7 +67,7 @@
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
-                    @Html.PasswordFor(model => model.Password, new { @class = "form-control", @required = "" })
+                    @Html.PasswordFor(model => model.Password, new { @class = "form-control", @required = "", @placeholder = "Từ 6 đến 32 ký tự" })
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default toggle-password" data-target="#Password" aria-label="Hiện mật khẩu">
                             <span class="glyphicon glyphicon-eye-open"></span>
@@ -85,7 +85,7 @@
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-lock"></span>
                     </div>
-                    @Html.PasswordFor(model => model.ConfirmPassword, new { @class = "form-control", @required = "" })
+                    @Html.PasswordFor(model => model.ConfirmPassword, new { @class = "form-control", @required = "", @placeholder = "Gõ lại mật khẩu" })
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default toggle-password" data-target="#ConfirmPassword" aria-label="Hiện mật khẩu">
                             <span class="glyphicon glyphicon-eye-open"></span>
@@ -94,7 +94,6 @@
                     @Html.ValidationMessageFor(model => model.ConfirmPassword, "", new { @class = "text-danger" })
                 </div>
             </div>
-
         </div>
 
         <div class="form-group">
@@ -117,7 +116,7 @@
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-globe"></span>
                     </div>
-                    @Html.TextAreaFor(model => model.Address, new { @class = "form-control", @required = "" })
+                    @Html.TextAreaFor(model => model.Address, new { @class = "form-control" })
                     @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -130,7 +129,7 @@
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-envelope"></span>
                     </div>
-                    @Html.TextBoxFor(model => model.Email, new { @class = "form-control", @required = "" })
+                    @Html.TextBoxFor(model => model.Email, new { @class = "form-control", @required = "", @placeholder = "VD: ten@gmail.com" })
                     @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -143,29 +142,18 @@
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-phone"></span>
                     </div>
-                    @Html.TextBoxFor(model => model.Phone, new { @class = "form-control", @required = "" })
+                    @Html.TextBoxFor(model => model.Phone, new { @class = "form-control", @required = "", @placeholder = "VD: 0901234567" })
                     @Html.ValidationMessageFor(model => model.Phone, "", new { @class = "text-danger" })
                 </div>
             </div>
         </div>
+
         <div class="form-group">
-            <label class="control-label col-md-2">Mã xác nhận</label>
+            <label class="control-label col-md-2">Xác minh "Tôi không phải là robot"</label>
             <div class="col-md-10">
-                <link href="@BotDetect.Web.CaptchaUrls.Absolute.LayoutStyleSheetUrl" rel="stylesheet" type="text/css" />
-                @{
-                    MvcCaptcha registerCaptcha = new MvcCaptcha("registerCaptcha");
-                    registerCaptcha.UserInputID = "CaptchaCode";
-                }
-                @Html.Captcha(registerCaptcha)
-                <div style="margin-top: 10px; max-width: 280px;">
-                    @Html.TextBox("CaptchaCode", null, new { @class = "form-control", @placeholder = "Nhập mã captcha", @required = "required" })
-                    @Html.ValidationMessage("CaptchaCode", "", new { @class = "text-danger" })
-                </div>
+                <div class="g-recaptcha" data-sitekey="@siteKey"></div>
             </div>
         </div>
-
-
-
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
@@ -173,10 +161,26 @@
             </div>
         </div>
     </div>
-
 }
 
+<script src="~/Scripts/jquery.validate.min.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
 <script>
+    // Dịch các thông báo mặc định của thư viện kiểm tra dữ liệu sang tiếng Việt
+    window.addEventListener('load', function () {
+        if (window.jQuery && window.jQuery.validator) {
+            window.jQuery.extend(window.jQuery.validator.messages, {
+                required: "Vui lòng điền thông tin này.",
+                remote: "Giá trị này đã được sử dụng.",
+                email: "Vui lòng nhập email hợp lệ.",
+                maxlength: "Vui lòng nhập tối đa {0} ký tự.",
+                minlength: "Vui lòng nhập ít nhất {0} ký tự.",
+                rangelength: "Vui lòng nhập từ {0} đến {1} ký tự.",
+                equalTo: "Giá trị không khớp."
+            });
+        }
+    });
+
     // Toggle hiện/ẩn mật khẩu
     document.querySelectorAll('.toggle-password').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -193,6 +197,3 @@
         });
     });
 </script>
-@*<div style="text-align:center">
-    <a href="/RegisterAndLogin/Login"> <input type="submit" value="Đăng nhập" class="btn btn-info" /></a>
-</div>*@
