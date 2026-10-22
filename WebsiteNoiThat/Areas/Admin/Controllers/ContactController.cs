@@ -83,7 +83,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                             <small style='color: #777;'>Địa chỉ: Ngõ 34 - Phú Kiều - Kiều Mai | Hotline: 01649.629.629</small>
                         </div>";
 
-                    new MailHelper().SendMail(contact.EmailCC.Trim(), subject, htmlBody);
+                    MailHelper.SendMail(contact.EmailCC.Trim(), subject, htmlBody);
                     TempData["Success"] = $"Đã hoàn thành hỗ trợ và gửi email phản hồi thành công đến {contact.EmailCC}!";
                 }
                 catch (Exception ex)
