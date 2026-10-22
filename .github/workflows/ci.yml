@@ -1,4 +1,4 @@
-name: CI - Website Noi That
+name: CI/CD - Website Noi That
 
 on:
   push:
@@ -8,8 +8,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
+# Cấp quyền cho GitHub Actions tự tạo bản Release mà không cần cấu hình thêm
+permissions:
+  contents: write
 
 jobs:
+  # ================= 1. CI: BUILD & ĐÓNG GÓI =================
   build:
     runs-on: windows-2022
 
@@ -55,7 +61,6 @@ jobs:
           }
 
           New-Item -ItemType Directory -Path $destination | Out-Null
-
           Copy-Item "$source\*" $destination -Recurse -Force
 
           if (-not (Test-Path "$destination\WebsiteNoiThat.csproj")) {
@@ -69,3 +74,36 @@ jobs:
           path: publish/
           if-no-files-found: error
           retention-days: 7
+
+  # ================= 2. CD: CONTINUOUS DELIVERY (TỰ ĐỘNG PHÁT HÀNH BẢN RELEASE) =================
+  cd-release:
+    name: Continuous Delivery (CD)
+    needs: build
+    runs-on: ubuntu-latest
+    # Chỉ chạy bước này khi code đã vào nhánh main
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Tải bản đóng gói từ bước CI
+        uses: actions/download-artifact@v4
+        with:
+          name: website-noithat-release
+          path: ./app-deploy
+
+      - name: Nén sản phẩm thành file .zip
+        run: |
+          cd app-deploy && zip -r ../WebsiteNoiThat-v1.0.${{ github.run_number }}.zip . && cd ..
+
+      - name: Tạo GitHub Release và xuất xưởng file cài đặt
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Website Nội Thất - Phiên bản Build #${{ github.run_number }}
+          body: |
+            ### 🚀 Quy trình Continuous Delivery (CD) hoàn tất!
+            - **Trạng thái:** Tự động đóng gói và xuất xưởng thành công từ nhánh `main`.
+            - **Commit:** `${{ github.sha }}`
+            - **Tải về file bên dưới để triển khai/chạy thử.**
+          files: WebsiteNoiThat-v1.0.${{ github.run_number }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
