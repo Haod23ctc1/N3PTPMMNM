@@ -208,7 +208,7 @@ namespace WebsiteNoiThat.Controllers
             // Kiểm tra hết hạn
             if (DateTime.Now > expireTime)
             {
-                ModelState.AddModelError("", "Mã OTP đã hết hạn! Vui lòng đăng ký lại.");
+                ModelState.AddModelError("", "Mã OTP đã hết hạn! Vui lòng nhấn 'Gửi lại mã OTP' để nhận mã mới.");
                 return View();
             }
 
@@ -247,6 +247,43 @@ namespace WebsiteNoiThat.Controllers
 
             ModelState.AddModelError("", "Đăng ký không thành công. Vui lòng thử lại!");
             return View();
+        }
+
+        // Gửi lại mã OTP đăng ký (khi hết hạn 5 phút hoặc khách chưa nhận được thư)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ResendRegisterOtp()
+        {
+            var registerData = Session["Register_Data"] as RegisterModel;
+            if (registerData == null)
+            {
+                return RedirectToAction("Register");
+            }
+
+            string otp = MailHelper.GenerateOTP();
+            Session["Register_OTP"] = otp;
+            Session["Register_ExpireTime"] = DateTime.Now.AddMinutes(5);
+
+            string body = $@"
+                <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e3e6f0; border-radius: 8px; max-width: 500px;'>
+                    <h3 style='color: #28a745; margin-top: 0;'>Xác thực đăng ký tài khoản</h3>
+                    <p>Xin chào <b>{registerData.Name}</b>,</p>
+                    <p>Mã OTP xác thực đăng ký (mới) của bạn là:</p>
+                    <div style='text-align: center; margin: 20px 0;'>
+                        <span style='font-size: 28px; font-weight: bold; color: #28a745; letter-spacing: 6px; background: #f8f9fc; padding: 10px 20px; border-radius: 6px; border: 1px dashed #d1d3e2;'>{otp}</span>
+                    </div>
+                    <p style='color: #858796; font-size: 13px;'>Mã này có hiệu lực trong <b>5 phút</b>. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
+                </div>";
+
+            bool sent = MailHelper.SendMail(registerData.Email, "Mã OTP kích hoạt tài khoản (gửi lại) - Website Nội Thất", body);
+            if (!sent)
+            {
+                TempData["OtpError"] = "Không thể gửi lại email xác thực. Vui lòng thử lại sau!";
+                return RedirectToAction("VerifyRegisterOtp");
+            }
+
+            TempData["OtpResent"] = "Đã gửi lại mã OTP mới về email của bạn.";
+            return RedirectToAction("VerifyRegisterOtp");
         }
         // ==================== 4. QUÊN MẬT KHẨU ====================
         [HttpGet]

@@ -10,6 +10,14 @@
             <p>Hệ thống đã gửi mã OTP xác nhận về địa chỉ email: <b>@ViewBag.Email</b></p>
         </div>
         <div class="panel-body">
+            @if (TempData["OtpResent"] != null)
+            {
+                <div class="alert alert-info">@TempData["OtpResent"]</div>
+            }
+            @if (TempData["OtpError"] != null)
+            {
+                <div class="alert alert-danger">@TempData["OtpError"]</div>
+            }
             @using (Html.BeginForm("VerifyRegisterOtp", "RegisterAndLogin", FormMethod.Post))
             {
                 @Html.AntiForgeryToken()
@@ -24,6 +32,15 @@
                     <a href="/RegisterAndLogin/Register" class="btn btn-link">Quay lại đăng ký</a>
                 </div>
             }
+
+            <div class="text-center" style="margin-top: 5px;">
+                <p style="color: #858796; font-size: 13px;">Chưa nhận được mã? Mã chỉ có hiệu lực trong 5 phút.</p>
+                @using (Html.BeginForm("ResendRegisterOtp", "RegisterAndLogin", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-link" style="padding: 0;">Gửi lại mã OTP</button>
+                }
+            </div>
         </div>
     </div>
 </div>
