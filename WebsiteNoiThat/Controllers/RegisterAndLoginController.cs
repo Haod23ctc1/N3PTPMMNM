@@ -220,12 +220,13 @@ namespace WebsiteNoiThat.Controllers
             }
 
             // OTP đúng -> Bắt đầu ghi người dùng vào CSDL
+            int.TryParse(registerData.Phone, out int phone); // Regex đã đảm bảo chuỗi là số
             var dao = new UserDao();
             var user = new User
             {
                 Username = registerData.UserName,
                 Password = Encryptor.MD5Hash(registerData.Password),
-                Phone = registerData.Phone,
+                Phone = phone,
                 Email = registerData.Email,
                 Address = registerData.Address,
                 Name = registerData.Name,
