@@ -1,46 +1,71 @@
-﻿@model List<WebsiteNoiThat.Models.CartItem>
+﻿@model WebsiteNoiThat.Controllers.CartController.OrderSuccessModel
 @{
-    ViewBag.Title = "Thanh toán";
+    ViewBag.Title = "Đặt hàng thành công";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-@*<div class="content">
+
+<div class="content" style="text-align:center">
     <div class="section group">
-        @if (Model.Count > 0)
+        <h3 id="title_spmoi" style="color:#28a745; margin: 25px 0 10px;">✔ Đặt hàng thành công!</h3>
+
+        @if (Model != null && Model.Order != null)
         {
-            <table class="table">
-                <thead>
-                    <tr>
-                        <td>Mã SP</td>
-                        <td>Tên SP</td>
-                        <td>Ảnh SP</td>
-                        <td>Số lượng</td>
-                        <td>Đơn giá</td>
-                        <td>Thành tiền</td>
-                        <td>Trạng thái</td>
-                        <td></td>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+            <div class="alert alert-success" style="max-width: 700px; margin: 0 auto 20px;">
+                <p><b>Mã đơn hàng:</b> #@Model.Order.OrderId</p>
+                <p><b>Trạng thái:</b> Đang chờ xác nhận</p>
+                <p><b>Phương thức thanh toán:</b> @Model.Order.PaymentMethod</p>
+                @if (Model.Order.PaymentMethod != null && Model.Order.PaymentMethod.Contains("Chuyển khoản"))
+                {
+                    <p style="color:#856404">Đơn hàng được xử lý sau khi chúng tôi nhận được chuyển khoản. Quý khách vui lòng thanh toán theo hướng dẫn trong email xác nhận.</p>
+                }
+            </div>
+
+            <div class="section" style="max-width: 780px; margin: 0 auto;">
+                <h4>Thông tin đơn hàng</h4>
+                <table class="table" style="text-align:left">
+                    <thead>
                         <tr>
-                            <td>@item.Product.ProductId</td>
-                            <td>@item.Product.Name</td>
-                            <td><img src="@Url.Content("~/image/" + item.Product.Photo)" width="100" /></td>
-                            <td><input type="text" class="txtQuantity" data-id="@item.Product.ProductId" value="@item.Quantity" /></td>
-                            <td>@item.Product.Price.GetValueOrDefault(0).ToString("N0")</td>
-                            <td>@string.Format("{0:#,###.##}",((item.Product.Price - (item.Product.Price * item.Product.Discount * 0.01)) * item.Quantity))</td>
-                            <td style="color:aqua">@ViewBag.Status</td>
-                            <td><a href="#" data-id="@item.Product.ProductId" class="btn-delete">Xoá</a></td>
+                            <th>Sản phẩm</th>
+                            <th>Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Khuyến mãi</th>
+                            <th>Thành tiền</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Details)
+                        {
+                            <tr>
+                                <td>@d.Name</td>
+                                <td>@d.Quantity</td>
+                                <td>@d.Price.GetValueOrDefault(0).ToString("N0")₫</td>
+                                <td>@d.Discount.GetValueOrDefault(0) %</td>
+                                <td>@(d.Price.GetValueOrDefault(0) * d.Quantity.GetValueOrDefault(0)).ToString("N0")₫</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td colspan="4" style="text-align:right"><b>Tổng tiền thanh toán</b></td>
+                            <td><b style="color:crimson">@Model.Total.ToString("N0")₫</b></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table" style="text-align:left">
+                    <tr><td style="width:150px"><b>Người nhận:</b></td><td>@Model.Order.ShipName</td></tr>
+                    <tr><td><b>Số điện thoại:</b></td><td>@Model.Order.ShipPhone</td></tr>
+                    <tr><td><b>Địa chỉ giao:</b></td><td>@Model.Order.ShipAddress</td></tr>
+                    <tr><td><b>Email xác nhận:</b></td><td>@Model.Order.ShipEmail</td></tr>
+                </table>
+                <p>Thông tin đơn hàng đã được gửi tới email của Quý khách.</p>
+                <a href="/" class="btn btn-primary" style="margin: 10px 5px;">Về trang chủ</a>
+                <a href="/gio-hang" class="btn btn-secondary" style="margin: 10px 5px;">Tiếp tục mua hàng</a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning" style="max-width: 700px; margin: 0 auto 20px;">
+                Không tìm thấy đơn hàng vừa đặt. Quý khách có thể xem lại đơn hàng trong mục <a href="/gio-hang">giỏ hàng</a>.
+            </div>
+            <a href="/" class="btn btn-primary">Về trang chủ</a>
         }
     </div>
-    </div>*@
-    <div class="alert alert-success" style="text-align:center">
-        Bạn vừa đặt hàng thành công
-    </div>
-
-    
+</div>

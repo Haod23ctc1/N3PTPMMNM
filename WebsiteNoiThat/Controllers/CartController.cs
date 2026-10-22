@@ -184,12 +184,14 @@ namespace WebsiteNoiThat.Controllers
         }
 
         [HttpPost]
-        public ActionResult PayBy(User n)
+        public ActionResult PayBy(User n, string PaymentMethod)
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
             var model = session != null ? db.Users.SingleOrDefault(a => a.UserId == session.UserId) : null;
             if (model != null)
             {
+                // Phương thức thanh toán do người dùng chọn trên trang thanh toán (issue #67), mặc định COD
+                PaymentMethod = string.IsNullOrWhiteSpace(PaymentMethod) ? "Tiền mặt khi nhận hàng (COD)" : PaymentMethod.Trim();
                 model.UserId = session.UserId;
                 model.Name = n.Name;
                 model.Phone = n.Phone;
@@ -213,6 +215,7 @@ namespace WebsiteNoiThat.Controllers
                 order.ShipEmail = n.Email;
                 order.UserId = session.UserId;
                 order.StatusId = 1;
+                order.PaymentMethod = PaymentMethod;
 
 
                 var id = new OrderDao().Insert(order);
@@ -249,6 +252,7 @@ namespace WebsiteNoiThat.Controllers
                 content = content.Replace("{{Phone}}", n.Phone.ToString());
                 content = content.Replace("{{Email}}", n.Email);
                 content = content.Replace("{{Address}}", n.Address);
+                content = content.Replace("{{PaymentMethod}}", PaymentMethod);
                 content = content.Replace("{{Total}}", total.ToString("N0"));
                 content = content.Replace("{{data}}", htmldata);
 
@@ -257,7 +261,8 @@ namespace WebsiteNoiThat.Controllers
                 //new MailHelper().SendMail(toEmail, "Đơn hàng mới từ NoiThatShop", content);
 
                 ViewBag.EMAIL = n.Email;
-                return Redirect("/hoan-thanh");
+                // Truyền mã đơn hàng mới tạo sang trang thành công (issue #46)
+                return Redirect("/hoan-thanh?OrderId=" + id);
             }
             else
             {
@@ -297,19 +302,65 @@ namespace WebsiteNoiThat.Controllers
 
         }
 
-        public ActionResult Success()
+        /// Thông tin trang "Đặt hàng thành công" (issue #46)
+        public class OrderSuccessDetail
+        {
+            public string Name { get; set; }
+            public string Photo { get; set; }
+            public int? Quantity { get; set; }
+            public int? Price { get; set; }
+            public int? Discount { get; set; }
+        }
+
+        public class OrderSuccessModel
+        {
+            public Order Order { get; set; }
+            public List<OrderSuccessDetail> Details { get; set; }
+            public double Total { get; set; }
+        }
+        public ActionResult Success(int? OrderId)
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
-            var cart = Session[CartSession];
-            var list = new List<CartItem>();
-            if (cart != null)
+            if (session == null)
             {
-                list = (List<CartItem>)cart;
-                ViewBag.Status = "Đã tiếp nhận";
-                ViewBag.ListItem = list;
-                Session["CartSession"] = null;
+                return Redirect("/dang-nhap");
             }
-            return View(list);
+
+            // Xoá giỏ hàng sau khi đặt hàng thành công
+            Session["CartSession"] = null;
+
+            // Chỉ hiển thị thông tin đơn hàng vừa tạo, thuộc đúng tài khoản đang đăng nhập
+            var order = OrderId.HasValue
+                ? db.Orders.FirstOrDefault(o => o.OrderId == OrderId.Value && o.UserId == session.UserId)
+                : null;
+            if (order != null)
+            {
+                var model = new OrderSuccessModel
+                {
+                    Order = order,
+                    Details = db.OrderDetails
+                        .Where(d => d.OrderId == order.OrderId)
+                        .Join(db.Products, d => d.ProductId, p => p.ProductId, (d, p) => new
+                        {
+                            d.Quantity,
+                            d.Price,
+                            p.Name,
+                            p.Photo,
+                            p.Discount
+                        }).ToList()
+                        .Select(d => new OrderSuccessDetail
+                        {
+                            Name = d.Name,
+                            Photo = d.Photo,
+                            Quantity = d.Quantity,
+                            Price = d.Price,
+                            Discount = d.Discount
+                        }).ToList()
+                };
+                model.Total = model.Details.Sum(d => d.Price.GetValueOrDefault(0) * d.Quantity.GetValueOrDefault(0));
+                return View(model);
+            }
+            return View(new OrderSuccessModel());
         }
 
         public ActionResult Error()

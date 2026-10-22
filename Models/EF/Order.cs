@@ -33,6 +33,9 @@
         [DisplayName("Địa chỉ nhận hàng")]
         public string ShipAddress { get; set; }
 
+        [DisplayName("Phương thức thanh toán")]
+        public string PaymentMethod { get; set; }
+
         [DisplayName("Trạng thái đơn hàng")]
         public int StatusId { get; set; }
     }

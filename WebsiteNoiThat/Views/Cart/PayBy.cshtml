@@ -95,6 +95,21 @@
                                 </div>
                             </div>*@
                         @*<input type="checkbox" name="ischeck" id="check" value="true" />Sử dụng thẻ tích điểm*@
+                        <div class="form-group">
+                            <label class="control-label col-md-2">Phương thức thanh toán</label>
+                            <div class="col-md-10" style="text-align:left">
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" name="PaymentMethod" value="Tiền mặt khi nhận hàng (COD)" checked /> Tiền mặt khi nhận hàng (COD)
+                                    </label>
+                                </div>
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" name="PaymentMethod" value="Chuyển khoản ngân hàng" /> Chuyển khoản ngân hàng
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     @*<button onclick="href='/gio-hang'" class="btn btn-secondary">Tiếp tục mua hàng</button>*@
                     <button type="submit" class="btn btn-primary">Gửi đơn hàng</button>
