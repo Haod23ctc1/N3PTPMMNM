@@ -5,9 +5,11 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     string siteKey = ConfigurationManager.AppSettings["GoogleReCaptchaSiteKey"] ?? "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 }
+
 <!-- Thư viện Google reCAPTCHA (Hiển thị ngôn ngữ Tiếng Việt) -->
 <script src="https://www.google.com/recaptcha/api.js?hl=vi" async defer></script>
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+
 <style>
     /* Nút hiện/ẩn mật khẩu trong input-group */
     .input-group-btn .toggle-password {
@@ -46,13 +48,13 @@
         </div>
 
         <div class="form-group">
-            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2 " })
+            @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
                 <div class="input-group">
                     <div class="input-group-addon">
                         <span class="glyphicon glyphicon-user"></span>
                     </div>
-                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control ", @required = "", @placeholder = "VD: nguyen_van_a (không dấu, không khoảng trắng)" })
+                    @Html.TextBoxFor(model => model.UserName, new { @class = "form-control", @required = "", @placeholder = "VD: nguyen_van_a (không dấu, không khoảng trắng)" })
                     @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
                 </div>
             </div>
@@ -189,7 +191,6 @@
             var icon = btn.querySelector('.glyphicon');
             if (icon) {
                 icon.classList.toggle('glyphicon-eye-open', !isHidden);
-                icon.classList.toggle('glyphicon-eye-close', isHidden);
                 icon.classList.toggle('glyphicon-eye-slash', isHidden);
             }
             btn.setAttribute('aria-label', isHidden ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
