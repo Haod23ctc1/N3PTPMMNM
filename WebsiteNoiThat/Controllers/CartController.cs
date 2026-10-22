@@ -253,8 +253,7 @@ namespace WebsiteNoiThat.Controllers
                 content = content.Replace("{{data}}", htmldata);
 
                 var toEmail = ConfigurationManager.AppSettings["ToEmailAddress"].ToString();
-
-                new MailHelper().SendMail(n.Email, "Đơn hàng mới từ NOITHATGO.VN", content);
+                MailHelper.SendMail(n.Email, "Đơn hàng mới từ NOITHATGO.VN", content);
                 //new MailHelper().SendMail(toEmail, "Đơn hàng mới từ NoiThatShop", content);
 
                 ViewBag.EMAIL = n.Email;
