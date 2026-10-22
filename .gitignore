@@ -73,3 +73,4 @@ nunit-*.xml
 # Web publish folders
 [Pp]ublish/
 [Pp]ublishProfiles/
+WebsiteNoiThat/secrets.config
