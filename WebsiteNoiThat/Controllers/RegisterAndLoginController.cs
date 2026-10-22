@@ -26,7 +26,7 @@ namespace WebsiteNoiThat.Controllers
         private bool ValidateRobotCaptcha()
         {
             string googleCaptchaToken = Request["g-recaptcha-response"];
-
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
             // 1. Nếu có token từ Google reCAPTCHA
             if (!string.IsNullOrEmpty(googleCaptchaToken))
             {
