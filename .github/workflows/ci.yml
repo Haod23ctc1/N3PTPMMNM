@@ -10,7 +10,6 @@ on:
       - main
   workflow_dispatch:
 
-# Cấp quyền cho GitHub Actions tự tạo bản Release mà không cần cấu hình thêm
 permissions:
   contents: write
 
@@ -75,12 +74,11 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ================= 2. CD: CONTINUOUS DELIVERY (TỰ ĐỘNG PHÁT HÀNH BẢN RELEASE) =================
+  # ================= 2. CD: CONTINUOUS DELIVERY =================
   cd-release:
     name: Continuous Delivery (CD)
     needs: build
-    runs-on: ubuntu-latest
-    # Chỉ chạy bước này khi code đã vào nhánh main
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -103,7 +101,6 @@ jobs:
             ### 🚀 Quy trình Continuous Delivery (CD) hoàn tất!
             - **Trạng thái:** Tự động đóng gói và xuất xưởng thành công từ nhánh `main`.
             - **Commit:** `${{ github.sha }}`
-            - **Tải về file bên dưới để triển khai/chạy thử.**
           files: WebsiteNoiThat-v1.0.${{ github.run_number }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
