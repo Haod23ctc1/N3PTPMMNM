@@ -32,10 +32,35 @@ namespace Models.DAO
         {
             return db.Users.SingleOrDefault(n => n.Username == username);
         }
+
+        /// <summary>
+        /// Tìm user cho màn hình đăng nhập: cho phép gõ Tên đăng nhập HOẶC Email HOẶC Số điện thoại (issue #54)
+        /// </summary>
+        public User GetUserForLogin(string userInput)
+        {
+            userInput = (userInput ?? "").Trim();
+            if (string.IsNullOrEmpty(userInput))
+            {
+                return null;
+            }
+
+            var user = db.Users.FirstOrDefault(x => x.Username == userInput);
+            if (user == null)
+            {
+                user = db.Users.FirstOrDefault(x => x.Email == userInput);
+            }
+            if (user == null && System.Text.RegularExpressions.Regex.IsMatch(userInput, @"^\d{9,11}$"))
+            {
+                // SĐT trong DB lưu dạng int nên bỏ số 0 đầu (0901234567 -> 901234567)
+                int phoneValue = int.Parse(userInput);
+                user = db.Users.FirstOrDefault(x => x.Phone == phoneValue);
+            }
+            return user;
+        }
         
         public int Login(string userName, string passWord, bool isLoginAdmin = false)
         {
-            var result = db.Users.SingleOrDefault(x => x.Username == userName);
+            var result = GetUserForLogin(userName);
             if (result == null)
             {
                 return 0;

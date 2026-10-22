@@ -9,7 +9,7 @@ namespace WebsiteNoiThat.Models
 {
     public class LoginModel
     {
-        [DisplayName("Tên đăng nhập")]
+        [DisplayName("Tài khoản (Tên đăng nhập / Email / SĐT)")]
         [Required(ErrorMessage = "Bạn phải nhập tài khoản!")]
         public string UserName { get; set; }
 
