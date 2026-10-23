@@ -55,8 +55,49 @@ namespace WebsiteNoiThat.Controllers
                 Response.TrySkipIisCustomErrors = true;
                 return View("NotFound");
             }
+            var feedbackDao = new FeedbackDao();
+            ViewBag.Feedbacks = feedbackDao.ListByProduct(Id);
+            ViewBag.AvgRate = feedbackDao.AverageRate(Id);
+            ViewBag.FeedbackCount = feedbackDao.CountByProduct(Id);
             return View(model);
 
+        }
+
+        // Gui danh gia san pham (issue #76): JS goi qua ajax, ngung hoc user phai dang nhap
+        [HttpPost]
+        public JsonResult AddFeedback(int productId, int rate, string content)
+        {
+            var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion];
+            if (session == null)
+                return Json(new { success = false, error = "login" });
+
+            if (rate < 1 || rate > 5 || string.IsNullOrWhiteSpace(content) || content.Trim().Length > 500)
+                return Json(new { success = false, error = "data" });
+
+            try
+            {
+                using (var dao = new FeedbackDao())
+                {
+                    dao.Insert(new Feedback
+                    {
+                        ProductId = productId,
+                        UserId = session.UserId,
+                        Rate = rate,
+                        Content = content.Trim(),
+                        Time = DateTime.Now
+                    });
+                    return Json(new
+                    {
+                        success = true,
+                        average = dao.AverageRate(productId),
+                        count = dao.CountByProduct(productId)
+                    });
+                }
+            }
+            catch
+            {
+                return Json(new { success = false, error = "db" });
+            }
         }
 
         //in ra theo danh mục sản phẩm
