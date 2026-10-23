@@ -8,9 +8,10 @@ on:
     branches:
       - '*' # Cho phép chạy trên tất cả các luồng Pull Request
   workflow_dispatch:
-
 permissions:
   contents: write
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ================= 1. CI: BUILD & ĐÓNG GÓI =================
@@ -66,7 +67,7 @@ jobs:
           }
 
       - name: Upload website artifact
-        uses: actions/upload-artifact@v4 # Giữ nguyên bản v4 chuẩn hóa cho artifact sinh ra
+        uses: actions/upload-artifact@v6
         with:
           name: website-noithat-release
           path: publish/
@@ -81,7 +82,7 @@ jobs:
 
     steps:
       - name: Tải bản đóng gói từ bước CI
-        uses: actions/download-artifact@v4 # Đồng bộ tải artifact
+        uses: actions/download-artifact@v7
         with:
           name: website-noithat-release
           path: ./app-deploy
@@ -103,5 +104,4 @@ jobs:
             - **Mã định danh Commit:** `${{ github.sha }}`
           files: v1.0.${{ github.run_number }}.zip
         env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
