@@ -78,7 +78,6 @@ jobs:
   cd-release:
     name: Continuous Delivery (CD)
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     steps:
       - name: Tải bản đóng gói từ bước CI
