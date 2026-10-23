@@ -163,13 +163,19 @@ namespace WebsiteNoiThat.Controllers
                         </div>
                         <p style='color: #858796; font-size: 13px;'>Mã này có hiệu lực trong <b>5 phút</b>. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
                     </div>";
-
+            try{
                 bool sent = MailHelper.SendMail(model.Email, "Mã OTP kích hoạt tài khoản - Website Nội Thất", body);
                 if (!sent)
                 {
-                    ModelState.AddModelError("", "Không thể gửi email xác thực. Vui lòng kiểm tra lại địa chỉ email hoặc kết nối mạng!");
+                    ModelState.AddModelError("", "Không thể gửi email xác thực từ máy chủ SMTP. Vui lòng kiểm tra lại cấu hình Web.config!");
                     return View(model);
                 }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Lỗi ngoại lệ khi gửi mail: " + ex.Message);
+                return View(model);
+            }
 
                 // Chuyển sang trang nhập OTP xác thực
                 return RedirectToAction("VerifyRegisterOtp");

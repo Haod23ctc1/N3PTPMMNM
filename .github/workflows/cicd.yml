@@ -1,38 +1,56 @@
+
 name: CI/CD - Website Noi That
 
 on:
   push:
     branches:
-      - '*' # Cho phép chạy trên TẤT CẢ các nhánh khi đẩy code lên
+      - '**'
   pull_request:
     branches:
-      - '*' # Cho phép chạy trên tất cả các luồng Pull Request
+      - '**'
   workflow_dispatch:
+
 permissions:
   contents: write
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ================= 1. CI: BUILD & ĐÓNG GÓI =================
+  # ================= 1. CI: BUILD =================
   build:
+    name: CI - Build Website
     runs-on: windows-2022
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
 
       - name: Restore NuGet packages
-        run: nuget restore WebsiteNoiThat.sln
+        shell: pwsh
+        run: |
+          nuget restore WebsiteNoiThat.sln
+          if ($LASTEXITCODE -ne 0) {
+            throw "NuGet restore failed"
+          }
 
       - name: Install .NET Framework 4.8 reference assemblies
         shell: pwsh
         run: |
           $packageDir = "$env:RUNNER_TEMP\ReferenceAssemblies"
-          nuget install Microsoft.NETFramework.ReferenceAssemblies.net48 -Version 1.0.3 -OutputDirectory $packageDir
+
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net48 `
+            -Version 1.0.3 `
+            -OutputDirectory $packageDir
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to install .NET Framework reference assemblies"
+          }
 
           $reference = Get-ChildItem $packageDir -Recurse -Filter mscorlib.dll |
             Where-Object { $_.FullName -match '[\\/]v4\.8[\\/]' } |
@@ -44,16 +62,30 @@ jobs:
 
           $frameworkRoot = Split-Path (Split-Path $reference.FullName -Parent) -Parent
           $frameworkRoot = Split-Path $frameworkRoot -Parent
-          "TargetFrameworkRootPath=$frameworkRoot" | Out-File $env:GITHUB_ENV -Append
+
+          "TargetFrameworkRootPath=$frameworkRoot" |
+            Out-File $env:GITHUB_ENV -Append
 
       - name: Build solution
-        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release /p:Platform="Any CPU"
-
-      - name: Package website for deployment
         shell: pwsh
         run: |
-          $source = "WebsiteNoiThat"
-          $destination = "$env:GITHUB_WORKSPACE\publish"
+          msbuild WebsiteNoiThat.sln `
+            /p:Configuration=Release `
+            '/p:Platform=Any CPU' `
+            /m
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSBuild failed"
+          }
+      - name: Package website
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:GITHUB_WORKSPACE "WebsiteNoiThat"
+          $destination = Join-Path $env:GITHUB_WORKSPACE "publish"
+
+          if (-not (Test-Path $source)) {
+            throw "Website project directory not found: $source"
+          }
 
           if (Test-Path $destination) {
             Remove-Item $destination -Recurse -Force
@@ -66,6 +98,10 @@ jobs:
             throw "Website project files were not found"
           }
 
+          if (-not (Test-Path "$destination\Web.config")) {
+            Write-Host "Warning: Web.config was not found in the package."
+          }
+
       - name: Upload website artifact
         uses: actions/upload-artifact@v6
         with:
@@ -74,34 +110,142 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ================= 2. CD: CONTINUOUS DELIVERY =================
+  # ================= 2. CD: RELEASE =================
   cd-release:
-    name: Continuous Delivery (CD)
+    name: CD - Create GitHub Release
     needs: build
+
+    # Chỉ phát hành khi push lên main hoặc chạy thủ công trên main.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+       github.event_name == 'workflow_dispatch')
+
     runs-on: ubuntu-24.04
+
     steps:
-      - name: Tải bản đóng gói từ bước CI
+      - name: Checkout full Git history and tags
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      
+      - name: Calculate next version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --tags --force
+
+          LAST_VERSION=$(
+            git tag -l 'v1.0.*' |
+            grep -E '^v1\.0\.[0-9]+$' |
+            sed 's/^v1\.0\.//' |
+            sort -n |
+            tail -n 1 || true
+          )
+
+          if [ -z "$LAST_VERSION" ]; then
+            NEXT_VERSION=1
+          else
+            NEXT_VERSION=$((LAST_VERSION + 1))
+          fi
+
+          NEXT_TAG="v1.0.${NEXT_VERSION}"
+          ZIP_NAME="WebsiteNoiThat-${NEXT_TAG}.zip"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$NEXT_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $NEXT_TAG already exists on GitHub."
+            exit 1
+          fi
+
+          echo "tag=$NEXT_TAG" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+          echo "Next release: $NEXT_TAG"
+          echo "ZIP file: $ZIP_NAME"
+      - name: Download website artifact
         uses: actions/download-artifact@v7
         with:
           name: website-noithat-release
           path: ./app-deploy
-
-      - name: Nén sản phẩm thành file .zip
+      
+      - name: Create ZIP package
+        shell: bash
+        env:
+          ZIP_NAME: ${{ steps.version.outputs.zip_name }}
         run: |
-          cd app-deploy && zip -r ../v1.0.${{ github.run_number }}.zip . && cd ..
+          set -euo pipefail
 
-      - name: Tạo GitHub Release và xuất xưởng file cài đặt
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v3 # ĐÃ CẬP NHẬT lên v3 để xóa hoàn toàn cảnh báo Node 20
+          test -d app-deploy
+          test -n "$(find app-deploy -type f -print -quit)"
+
+          zip -r "$ZIP_NAME" app-deploy
+          test -f "$ZIP_NAME"
+
+      # Tìm tag phiên bản trước và liệt kê contributors kể từ tag đó.
+      
+      - name: Get release contributors
+        id: get_contributors
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CURRENT_TAG="${{ steps.version.outputs.tag }}"
+
+          PREVIOUS_TAG=$(
+            git tag -l 'v1.0.*' |
+            grep -E '^v1\.0\.[0-9]+$' |
+            grep -vxF "$CURRENT_TAG" |
+            sort -t. -k3,3n |
+            tail -n 1 || true
+          )
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CONTRIBS=$(
+              git log "${PREVIOUS_TAG}..HEAD" \
+                --format='%an <%ae>' |
+              sort -fu |
+              sed 's/^/- /'
+            )
+          else
+            CONTRIBS=$(
+              git log HEAD --format='%an <%ae>' |
+              sort -fu |
+              sed 's/^/- /'
+            )
+          fi
+
+          if [ -z "$CONTRIBS" ]; then
+            CONTRIBS="- Không tìm thấy contributors trong phạm vi commit."
+          fi
+
+          {
+            echo "contributors<<EOF"
+            echo "$CONTRIBS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: v1.0.${{ github.run_number }}
-          prerelease: ${{ github.ref_name != 'main' }} # Nếu không phải nhánh main, tự động đặt làm bản thử nghiệm thử tải
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Website Nội Thất - Phiên bản ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          prerelease: false
+          generate_release_notes: false
           body: |
-            ### Quy trình Continuous Delivery (CD) hoàn tất thành công!
-            - **Nhánh thực hiện:** `${{ github.ref_name }}`
-            - **Trạng thái:** Tự động đóng gói từ mã nguồn mới nhất.
-            - **Mã định danh Commit:** `${{ github.sha }}`
-          files: v1.0.${{ github.run_number }}.zip
+            ## Continuous Delivery hoàn tất
+
+            - **Nhánh:** `${{ github.ref_name }}`
+            - **Commit:** `${{ github.sha }}`
+            - **Người kích hoạt:** @${{ github.actor }}
+            - **Phiên bản:** `${{ steps.version.outputs.tag }}`
+
+            ## 👥 Contributors
+
+            ${{ steps.get_contributors.outputs.contributors }}
+
+          files: ${{ steps.version.outputs.zip_name }}
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
