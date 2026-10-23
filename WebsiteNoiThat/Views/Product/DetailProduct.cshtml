@@ -53,6 +53,26 @@
         </tr>
         <tr>
             <td>
+                <p class="status">Đánh giá:
+                    @if (ViewBag.AvgRate != null)
+                    {
+                        var avg = (double)ViewBag.AvgRate;
+                        var saoDay = (int)Math.Round(avg);
+                        for (var i = 1; i <= 5; i++)
+                        {
+                            <i class="fa @(i <= saoDay ? "fa-star" : "fa-star-o")" style="color:#f5a623"></i>
+                        }
+                        <span>@avg.ToString("0.0")/5 · @ViewBag.FeedbackCount đánh giá</span>
+                    }
+                    else
+                    {
+                        <span style="color:#999">Chưa có đánh giá</span>
+                    }
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
                 <div class="form-group">
                     <a href="/them-gio-hang?productid=@Model.ProductId&quantity=1" class="btn btn-primary"><i class="fa fa-cart-plus" aria-hidden="true"></i> Đặt mua hàng</a>
                 </div>
@@ -69,6 +89,7 @@
             <li class="nav"><a href="#tab-gh" data-toggle="tab"> Giao hàng </a></li>
             <li class="nav"><a href="#tab-th" data-toggle="tab"> Trả hàng </a></li>
             <li class="nav"><a href="#tab-bh" data-toggle="tab"> Bảo hành </a></li>
+            <li class="nav"><a href="#tab-dg" data-toggle="tab"> Đánh giá <span style="font-size:13px; color:#999">(@ViewBag.FeedbackCount)</span></a></li>
         </ul>
 
         <!-- Tab panes -->
@@ -191,6 +212,68 @@
                 </p>
             </div>
 
+            <div class="tab-pane fade" id="tab-dg">
+                <div id="fb-summary" style="margin-bottom:15px">
+                    <strong>Đánh giá của khách hàng:</strong>
+                    @if (ViewBag.AvgRate != null)
+                    {
+                        var avg = (double)ViewBag.AvgRate;
+                        var saoDay = (int)Math.Round(avg);
+                        for (var i = 1; i <= 5; i++)
+                        {
+                            <i class="fa @(i <= saoDay ? "fa-star" : "fa-star-o")" style="color:#f5a623; font-size:18px"></i>
+                        }
+                        <span>@avg.ToString("0.0")/5 · @ViewBag.FeedbackCount đánh giá</span>
+                    }
+                    else
+                    {
+                        <span style="color:#999">Chưa có đánh giá nào — bạn hãy là người đầu tiên!</span>
+                    }
+                </div>
+
+                <div id="fb-list" style="margin-bottom:20px">
+                    @foreach (var f in (List<Models.DAO.FeedbackView>)ViewBag.Feedbacks)
+                    {
+                        <div class="fb-item" style="border-bottom:1px solid #eee; padding:10px 0">
+                            <div>
+                                <strong>@f.DisplayName</strong>
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="fa @(i <= f.Rate ? "fa-star" : "fa-star-o")" style="color:#f5a623"></i>
+                                }
+                                <span style="color:#999; font-size:12px; margin-left:8px">@f.Time.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <p style="margin:6px 0 0; line-height:1.7">@f.Content</p>
+                        </div>
+                    }
+                </div>
+
+                <div id="fb-form">
+                    @if (Session[WebsiteNoiThat.Common.Commoncontent.user_sesion] != null)
+                    {
+                        <strong>Của bạn vào đây:</strong>
+                        <div id="fb-stars" style="margin:8px 0">
+                            <span style="margin-right:6px">Chọn số sao:</span>
+                            @{ for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="fa fa-star-o fb-star" data-rate="@i" style="color:#f5a623; font-size:22px; cursor:pointer; margin-right:4px"></i>
+                                } }
+                            <span id="fb-rate-text" style="color:#999; margin-left:6px"></span>
+                            <input type="hidden" id="fb-rate" value="0" />
+                        </div>
+                        <textarea id="fb-content" rows="3" maxlength="500" class="form-control" style="max-width:600px" placeholder="Chia sẻ cảm nhận về sản phẩm (tối đa 500 ký tự)..."></textarea>
+                        <div style="margin-top:10px">
+                            <button type="button" id="fb-send" class="btn btn-primary"><i class="fa fa-paper-plane"></i> Gửi đánh giá</button>
+                            <span id="fb-note" style="margin-left:10px"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <p><a href="/dang-nhap">Đăng nhập</a> để gửi đánh giá về sản phẩm này. Cảm ơn bạn!</p>
+                    }
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -208,3 +291,86 @@
     @Html.Action("CateKorea", "Product")
     @Html.Action("CateHavana", "Product")
 </div>
+
+<script type="text/javascript">
+    // Tinh nang danh gia san pham (issue #76)
+    window.addEventListener('load', function () {
+        var stars = document.querySelectorAll('.fb-star');
+        var rateInput = document.getElementById('fb-rate');
+        var note = document.getElementById('fb-note');
+        if (!stars.length || !rateInput) {
+            // nguoi chua dang nhap: van kich hoat tab neu URL co #tab-dg
+            if (window.location.hash === '#tab-dg') {
+                var link0 = document.querySelector('a[href="#tab-dg"]');
+                try { if (link0) { window.jQuery(link0).tab('show'); } } catch (e) { }
+            }
+            return;
+        }
+
+        function paint(rate) {
+            for (var i = 0; i < stars.length; i++) {
+                var r = parseInt(stars[i].getAttribute('data-rate'), 10);
+                stars[i].className = 'fa ' + (r <= rate ? 'fa-star' : 'fa-star-o') + ' fb-star';
+                stars[i].style.color = '#f5a623';
+                stars[i].style.fontSize = '22px';
+                stars[i].style.cursor = 'pointer';
+                stars[i].style.marginRight = '4px';
+            }
+            rateInput.value = rate;
+            var label = document.getElementById('fb-rate-text');
+            if (label) label.textContent = rate > 0 ? rate + '/5 sao' : '';
+        }
+
+        for (var i = 0; i < stars.length; i++) {
+            stars[i].addEventListener('click', function () {
+                paint(parseInt(this.getAttribute('data-rate'), 10) || 0);
+            });
+        }
+
+        // Mo tab Danh gia neu URL co #tab-dg (sau reload khi gui danh gia)
+        if (window.location.hash === '#tab-dg') {
+            var link = document.querySelector('a[href="#tab-dg"]');
+            try { if (link) { window.jQuery(link).tab('show'); } } catch (e) { }
+            var target = document.getElementById('tab-dg');
+            if (target) target.scrollIntoView({ block: 'start' });
+        }
+
+        var btn = document.getElementById('fb-send');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                var rate = parseInt(rateInput.value, 10) || 0;
+                var content = document.getElementById('fb-content').value.trim();
+                if (rate < 1 || !content) {
+                    note.textContent = 'Bạn cần chọn số sao và viết nội dung đánh giá.';
+                    note.style.color = '#d9534f';
+                    return;
+                }
+                if (note) { note.textContent = 'Đang gửi...'; note.style.color = '#999'; }
+                window.jQuery.post('/Product/AddFeedback', {
+                    productId: '@Model.ProductId',
+                    rate: rate,
+                    content: content
+                })
+                .done(function (res) {
+                    if (res && res.success) {
+                        window.location.href = window.location.pathname + '#tab-dg';
+                        window.location.reload();
+                    } else if (res && res.error === 'login') {
+                        note.textContent = 'Bạn cần đăng nhập để đánh giá.';
+                        note.style.color = '#d9534f';
+                    } else if (res && res.error === 'data') {
+                        note.textContent = 'Dữ liệu chưa hợp lệ (sao 1-5, nội dung tối đa 500 ký tự).';
+                        note.style.color = '#d9534f';
+                    } else {
+                        note.textContent = 'Không gửi được đánh giá, vui lòng thử lại sau.';
+                        note.style.color = '#d9534f';
+                    }
+                })
+                .fail(function () {
+                    note.textContent = 'Lỗi kết nối, vui lòng thử lại sau.';
+                    note.style.color = '#d9534f';
+                });
+            });
+        }
+    });
+</script>

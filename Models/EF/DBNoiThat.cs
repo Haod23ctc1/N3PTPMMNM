@@ -15,6 +15,7 @@ namespace Models.EF
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Contact> Contacts { get; set; }
         public virtual DbSet<Credential> Credentials { get; set; }
+        public virtual DbSet<Feedback> Feedbacks { get; set; }
         public virtual DbSet<News> News { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
