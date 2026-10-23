@@ -78,8 +78,8 @@ jobs:
   cd-release:
     name: Continuous Delivery (CD)
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-
     steps:
       - name: Tải bản đóng gói từ bước CI
         uses: actions/download-artifact@v7
@@ -92,6 +92,7 @@ jobs:
           cd app-deploy && zip -r ../v1.0.${{ github.run_number }}.zip . && cd ..
 
       - name: Tạo GitHub Release và xuất xưởng file cài đặt
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v3 # ĐÃ CẬP NHẬT lên v3 để xóa hoàn toàn cảnh báo Node 20
         with:
           tag_name: v1.0.${{ github.run_number }}
