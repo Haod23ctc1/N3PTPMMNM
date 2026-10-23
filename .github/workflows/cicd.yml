@@ -1,0 +1,107 @@
+name: CI/CD - Website Noi That
+
+on:
+  push:
+    branches:
+      - '*' # Cho phép chạy trên TẤT CẢ các nhánh khi đẩy code lên
+  pull_request:
+    branches:
+      - '*' # Cho phép chạy trên tất cả các luồng Pull Request
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ================= 1. CI: BUILD & ĐÓNG GÓI =================
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v5
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Restore NuGet packages
+        run: nuget restore WebsiteNoiThat.sln
+
+      - name: Install .NET Framework 4.8 reference assemblies
+        shell: pwsh
+        run: |
+          $packageDir = "$env:RUNNER_TEMP\ReferenceAssemblies"
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net48 -Version 1.0.3 -OutputDirectory $packageDir
+
+          $reference = Get-ChildItem $packageDir -Recurse -Filter mscorlib.dll |
+            Where-Object { $_.FullName -match '[\\/]v4\.8[\\/]' } |
+            Select-Object -First 1
+
+          if (-not $reference) {
+            throw "Could not find .NET Framework 4.8 reference assemblies"
+          }
+
+          $frameworkRoot = Split-Path (Split-Path $reference.FullName -Parent) -Parent
+          $frameworkRoot = Split-Path $frameworkRoot -Parent
+          "TargetFrameworkRootPath=$frameworkRoot" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Build solution
+        run: msbuild WebsiteNoiThat.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+      - name: Package website for deployment
+        shell: pwsh
+        run: |
+          $source = "WebsiteNoiThat"
+          $destination = "$env:GITHUB_WORKSPACE\publish"
+
+          if (Test-Path $destination) {
+            Remove-Item $destination -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $destination | Out-Null
+          Copy-Item "$source\*" $destination -Recurse -Force
+
+          if (-not (Test-Path "$destination\WebsiteNoiThat.csproj")) {
+            throw "Website project files were not found"
+          }
+
+      - name: Upload website artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: website-noithat-release
+          path: publish/
+          if-no-files-found: error
+          retention-days: 7
+
+  # ================= 2. CD: CONTINUOUS DELIVERY =================
+  cd-release:
+    name: Continuous Delivery (CD)
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Tải bản đóng gói từ bước CI
+        uses: actions/download-artifact@v7
+        with:
+          name: website-noithat-release
+          path: ./app-deploy
+
+      - name: Nén sản phẩm thành file .zip
+        run: |
+          cd app-deploy && zip -r ../v1.0.${{ github.run_number }}.zip . && cd ..
+
+      - name: Tạo GitHub Release và xuất xưởng file cài đặt
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v3 # ĐÃ CẬP NHẬT lên v3 để xóa hoàn toàn cảnh báo Node 20
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: v1.0.${{ github.run_number }}
+          prerelease: ${{ github.ref_name != 'main' }} # Nếu không phải nhánh main, tự động đặt làm bản thử nghiệm thử tải
+          body: |
+            ### Quy trình Continuous Delivery (CD) hoàn tất thành công!
+            - **Nhánh thực hiện:** `${{ github.ref_name }}`
+            - **Trạng thái:** Tự động đóng gói từ mã nguồn mới nhất.
+            - **Mã định danh Commit:** `${{ github.sha }}`
+          files: v1.0.${{ github.run_number }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
