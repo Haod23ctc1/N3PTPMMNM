@@ -137,19 +137,19 @@
                                 <form action="/Product/SearchFocus" method="get">
                                     <div style="margin-left: 40px;">
 
-                                    <input type="checkbox" class="form-check-input" id="check0" name="check0" value="true">
+                                    <input type="checkbox" class="form-check-input" id="check0" name="check0" value="true" @(ViewBag.Check0 == true ? "checked" : null)>
                                     <label class="form-check-label" for="check0">Dưới 5 Triệu</label>
                                     <br />
-                                    <input type="checkbox" class="form-check-input" id="check1" name="check1" value="true">
+                                    <input type="checkbox" class="form-check-input" id="check1" name="check1" value="true" @(ViewBag.Check1 == true ? "checked" : null)>
                                     <label class="form-check-label" for="check1">5 Triệu - 10 Triệu</label>
                                     <br />
-                                    <input type="checkbox" class="form-check-input" id="check2" name="check2" value="true">
+                                    <input type="checkbox" class="form-check-input" id="check2" name="check2" value="true" @(ViewBag.Check2 == true ? "checked" : null)>
                                     <label class="form-check-label" for="check2">10 Triệu - 20 Triệu</label>
                                     <br />
-                                    <input type="checkbox" class="form-check-input" id="check3" name="check3" value="true">
+                                    <input type="checkbox" class="form-check-input" id="check3" name="check3" value="true" @(ViewBag.Check3 == true ? "checked" : null)>
                                     <label class="form-check-label" for="check3">20 Triệu - 50 Triệu</label>
                                     <br />
-                                    <input type="checkbox" class="form-check-input" id="check4" name="check4" value="true">
+                                    <input type="checkbox" class="form-check-input" id="check4" name="check4" value="true" @(ViewBag.Check4 == true ? "checked" : null)>
                                     <label class="form-check-label" for="check4">Trên 50 Triệu</label>
 
                                     </div>

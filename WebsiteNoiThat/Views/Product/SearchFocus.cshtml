@@ -70,7 +70,7 @@
 
 Trang @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber)/@Model.PageCount
 <div class="Menutrang">
-    @Html.PagedListPager(Model, page => Url.Action("SearchFocus", new { page = page, check1=ViewBag.Check1, check2 = ViewBag.Check2, check3 = ViewBag.Check3, check4 = ViewBag.Check4 }))
+    @Html.PagedListPager(Model, page => Url.Action("SearchFocus", new { page = page, check0 = ViewBag.Check0, check1 = ViewBag.Check1, check2 = ViewBag.Check2, check3 = ViewBag.Check3, check4 = ViewBag.Check4 }))
 </div>
 <style>
     .Menutrang li {
