@@ -68,7 +68,7 @@
                                         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
                                         <fieldset>
                                             <div class="form-group">
-                                                @Html.TextBoxFor(model => model.Username, new { @class = "form-control form-control-user", @id = "exampleInputEmail", @placeholder = "Tên đăng nhập", @autofocus = "autofocus" })
+                                                @Html.TextBoxFor(model => model.Username, new { @class = "form-control form-control-user", @id = "exampleInputEmail", @placeholder = "Tên đăng nhập / Email / SĐT", @autofocus = "autofocus" })
                                             </div>
                                             <div class="form-group">
                                                 <div class="password-field position-relative">
@@ -98,7 +98,11 @@
                                         </fieldset>
                                     }
                                     <div class="text-center">
-                                        @*<a class="small" href="#">Quên mật khẩu?</a>*@
+                                        @if (TempData["Success"] != null)
+                                        {
+                                            <div class="alert alert-success small">@TempData["Success"]</div>
+                                        }
+                                        <a class="small" href="@Url.Action("ForgotPassword", "Login")">Quên mật khẩu?</a>
                                         <a class="small" href="/RegisterAndLogin/Login">Đăng nhập khách hàng</a>
                                     </div>
                                 </div>
