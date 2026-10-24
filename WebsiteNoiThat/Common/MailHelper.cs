@@ -9,6 +9,14 @@ namespace WebsiteNoiThat.Common
     public class MailHelper
     {
         /// <summary>
+        /// Cờ cho biết lần SendMail gần nhất đã phải dùng kênh dự phòng (lưu file trong App_Data)
+        /// hay chưa đúng nghĩa là email chưa đến tay người dùng thật. Dùng để hiển thị mã OTP
+        /// ngay trên giao diện xác thực ở MÔI TRƯỜNG DEV (mail chưa cấu hình/chịn mạng).
+        /// Khi triển khai thật có SMTP hợp lệ, cờ này luôn false nên mã không bao giờ bị lộ.
+        /// </summary>
+        public static bool LastSentViaDevFallback { get; private set; } = false;
+
+        /// <summary>
         /// Hàm tự động sinh mã OTP ngẫu nhiên (mặc định 6 số)
         /// </summary>
         public static string GenerateOTP(int length = 6)
@@ -55,6 +63,9 @@ namespace WebsiteNoiThat.Common
         {
         try
         {
+            // reset cờ trước mỗi lần gửi thật
+            LastSentViaDevFallback = false;
+
         // BẮT BUỘC: Ép hệ thống sử dụng giao thức bảo mật TLS 1.2 để bắt tay với Resend
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
@@ -129,6 +140,7 @@ namespace WebsiteNoiThat.Common
                 try
                 {
                     SaveMailToFile(toEmailAddress, subject, content);
+                    LastSentViaDevFallback = true; // mail chỉ lưu ra file (chưa thật sự đến người dùng)
                     return true; // Đã "gửi" qua kênh file trong môi trường dev
                 }
                 catch (Exception fileEx)

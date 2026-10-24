@@ -10,6 +10,13 @@
             <p>Hệ thống đã gửi mã OTP xác nhận về địa chỉ email: <b>@ViewBag.Email</b></p>
         </div>
         <div class="panel-body">
+            @if (TempData["DevOtp"] != null)
+            {
+                <div class="alert alert-warning text-center" style="border-left: 5px solid #f0ad4e;">
+                    <b>⚠️ Chế độ dev (email dự phòng):</b> hệ thống chưa gửi được mail qua SMTP nên mã OTP hiển thị trực tiếp tại đây:<br />
+                    <b style="font-size: 26px; letter-spacing: 8px; color: #4e73df;">@TempData["DevOtp"]</b>
+                </div>
+            }
             @if (TempData["OtpResent"] != null)
             {
                 <div class="alert alert-info">@TempData["OtpResent"]</div>

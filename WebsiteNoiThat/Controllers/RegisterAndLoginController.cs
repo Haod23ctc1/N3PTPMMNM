@@ -177,6 +177,13 @@ namespace WebsiteNoiThat.Controllers
                 return View(model);
             }
 
+                // Chế độ dev: mail phải lưu ra file (SMTP không gửi được) -> hiện luôn mã OTP
+                // trên trang xác thực để tester không phải đi mở file (issue: hiển thị OTP dev)
+                if (MailHelper.LastSentViaDevFallback)
+                {
+                    TempData["DevOtp"] = otp;
+                }
+
                 // Chuyển sang trang nhập OTP xác thực
                 return RedirectToAction("VerifyRegisterOtp");
             }
@@ -287,6 +294,11 @@ namespace WebsiteNoiThat.Controllers
             {
                 TempData["OtpError"] = "Không thể gửi lại email xác thực. Vui lòng thử lại sau!";
                 return RedirectToAction("VerifyRegisterOtp");
+            }
+
+            if (MailHelper.LastSentViaDevFallback)
+            {
+                TempData["DevOtp"] = otp; // chỉ hiện khi mail gửi bằng kênh dự phòng (dev)
             }
 
             TempData["OtpResent"] = "Đã gửi lại mã OTP mới về email của bạn.";
