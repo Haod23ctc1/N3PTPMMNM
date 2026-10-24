@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Web;
 using System.Web.Mvc;
 using Models;
@@ -150,43 +151,46 @@ namespace WebsiteNoiThat.Controllers
             return View(model);
         }
         
-        //tìm theo khoảng giá
+        //tìm theo khoảng giá (issue #73: cho phép tích nhiều mức giá cùng lúc, hiển thị sản phẩm của tất cả các mức đã tích)
         public ActionResult SearchFocus(bool? check0, bool? check1, bool? check2, bool? check3, bool? check4, int? page)
         {
             int pagenumber = (page ?? 1);
             int pagesize = 16;
-            if (check0 == true)
+            ViewBag.Check0 = check0 == true;
+            ViewBag.Check1 = check1 == true;
+            ViewBag.Check2 = check2 == true;
+            ViewBag.Check3 = check3 == true;
+            ViewBag.Check4 = check4 == true;
+
+            // Gom tất cả các mức giá người dùng đã tích: (giá trị nhỏ nhất, giá trị lớn nhất hoặc null nếu không chặn trên)
+            var ranges = new List<Tuple<int, int?>>();
+            if (check0 == true) ranges.Add(Tuple.Create(0, (int?)5000000));
+            if (check1 == true) ranges.Add(Tuple.Create(5000000, (int?)10000000));
+            if (check2 == true) ranges.Add(Tuple.Create(10000000, (int?)20000000));
+            if (check3 == true) ranges.Add(Tuple.Create(20000000, (int?)50000000));
+            if (check4 == true) ranges.Add(Tuple.Create(50000000, (int?)null));
+            if (ranges.Count == 0)
             {
-                var model = db.Products.Where(n => n.Price > 0 && n.Price <= 5000000).OrderBy(n => n.Price).ToPagedList(pagenumber, pagesize);
-                ViewBag.Check0 = check0;
-                return View(model);
+                return View();
             }
-            if (check1 == true )
+
+            // Ghép các khoảng bằng điều kiện HOẶC để lấy gộp sản phẩm của mọi khoảng đã tích
+            var param = Expression.Parameter(typeof(Product), "n");
+            Expression body = null;
+            foreach (var r in ranges)
             {
-                var model = db.Products.Where(n => n.Price > 5000000 && n.Price <= 10000000).OrderBy(n=>n.Price).ToPagedList(pagenumber, pagesize);
-                ViewBag.Check1 = check1;
-                return View(model);
+                var price = Expression.Property(param, nameof(Product.Price));
+                Expression part = Expression.GreaterThan(price, Expression.Constant(r.Item1, typeof(int?)));
+                if (r.Item2.HasValue)
+                {
+                    part = Expression.AndAlso(part, Expression.LessThanOrEqual(price, Expression.Constant(r.Item2.Value, typeof(int?))));
+                }
+                body = body == null ? part : Expression.OrElse(body, part);
             }
-             if ( check2 == true)
-            {
-                var model = db.Products.Where(n => n.Price > 10000000 && n.Price <= 20000000).OrderBy(n => n.Price).ToPagedList(pagenumber, pagesize);
-                ViewBag.Check2 = check2;
-                return View(model);
-            }
-            if ( check3 == true )
-            {
-                var model = db.Products.Where(n => n.Price > 20000000 && n.Price <= 50000000).OrderBy(n => n.Price).ToPagedList(pagenumber, pagesize);
-                ViewBag.Check3 = check3;
-                return View(model);
-            }
-            if ( check4 == true)
-            {
-                var model = db.Products.Where(n => n.Price > 50000000).OrderBy(n => n.Price).ToPagedList(pagenumber, pagesize);
-                ViewBag.Check4 = check4;
-                return View(model);
-            }
-            return View() ;
-            
+            var lambda = Expression.Lambda<Func<Product, bool>>(body, param);
+
+            var model = db.Products.Where(lambda).OrderBy(n => n.Price).ToPagedList(pagenumber, pagesize);
+            return View(model);
         }
 
         public JsonResult ListName(string q)
