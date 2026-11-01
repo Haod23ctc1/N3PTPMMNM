@@ -13,6 +13,7 @@ namespace Models.EF
 
         public virtual DbSet<Card> Cards { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<ChatMessage> ChatMessages { get; set; }
         public virtual DbSet<Contact> Contacts { get; set; }
         public virtual DbSet<Credential> Credentials { get; set; }
         public virtual DbSet<Feedback> Feedbacks { get; set; }

@@ -10,6 +10,8 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using WebsiteNoiThat.Areas.Admin.Models;
+using Models.DAO;
+using Models.EF;
 using WebsiteNoiThat.Common;
 using WebsiteNoiThat.Models;
 
@@ -177,8 +179,13 @@ namespace WebsiteNoiThat.Controllers
                 return View(model);
             }
 
-                // Chuyển sang trang nhập OTP xác thực
-                return RedirectToAction("VerifyRegisterOtp");
+            // Issue #114: đồng thời gửi OTP vào kênh Chat nội bộ của site
+            SendOtpToChat(model.Email, ChatMessageDao.NormalizePhone(model.Phone),
+                string.Format("Mã OTP kích hoạt tài khoản của bạn là: {0}\nMã có hiệu lực trong 5 phút. Vui lòng không chia sẻ cho bất kỳ ai.", otp),
+                model.Name ?? model.UserName);
+
+            // Chuyển sang trang nhập OTP xác thực
+            return RedirectToAction("VerifyRegisterOtp");
             }
 
             return View(model);
@@ -249,6 +256,15 @@ namespace WebsiteNoiThat.Controllers
                 Session.Remove("Register_ExpireTime");
 
                 var newUser = db.Users.SingleOrDefault(n => n.Username == registerData.UserName);
+
+                // Issue #114: sau khi tài khoản được tạo, gắn thread chat "khách" (trước đó
+                // đã nhận tin nhắn OTP đăng ký) vào UserId mới để khách login xem đủ lịch sử
+                if (newUser != null)
+                {
+                    new ChatMessageDao().LinkGuestThreadToUser(registerData.Email,
+                        ChatMessageDao.NormalizePhone(registerData.Phone), newUser.UserId);
+                }
+
                 return RedirectToAction("Card", new { UserId = newUser.UserId });
             }
 
@@ -289,6 +305,12 @@ namespace WebsiteNoiThat.Controllers
                 return RedirectToAction("VerifyRegisterOtp");
             }
             TempData["OtpResent"] = "Đã gửi lại mã OTP mới về email của bạn.";
+
+            // Issue #114: gửi OTP vào chat nội bộ (thread đang chờ xác thực)
+            SendOtpToChat(registerData.Email, ChatMessageDao.NormalizePhone(registerData.Phone),
+                string.Format("Mã OTP kích hoạt tài khoản của bạn là: {0}\nMã có hiệu lực trong 5 phút.", otp),
+                registerData.Name ?? registerData.UserName);
+
             return RedirectToAction("VerifyRegisterOtp");
         }
         // ==================== 4. QUÊN MẬT KHẨU ====================
@@ -347,6 +369,11 @@ namespace WebsiteNoiThat.Controllers
                 ModelState.AddModelError("", "Không thể gửi email. Vui lòng kiểm tra lại cấu hình hoặc thử lại sau!");
                 return View();
             }
+
+            // Issue #114: gửi OTP lấy lại mật khẩu vào kênh Chat nội bộ của tài khoản
+            SendOtpToChat(user.Email, ChatMessageDao.NormalizePhone(user.Phone.ToString()),
+                string.Format("Mã OTP khôi phục mật khẩu của bạn là: {0}\nMã có hiệu lực trong 5 phút. Vui lòng không chia sẻ cho bất kỳ ai.", otp),
+                user.Name ?? user.Username, user.UserId);
 
             return RedirectToAction("ConfirmResetOtp");
         }
@@ -637,6 +664,34 @@ namespace WebsiteNoiThat.Controllers
                 }
             }
             return PartialView();
+        }
+
+// ============ Issue #114: Gui OTP vao kenh Chat noi bo ============
+        // OTP cho dang ky / lay lai mat khau duoc ghi nhu 1 tin nhan cua "He thong"
+        // vao thread chat. Khach doc duoc bang: dang nhap lai /Chat, hoac tra cuu
+        // bang Email + So dien thoai (khi chua dang nhap duoc).
+        private void SendOtpToChat(string email, string phone, string content, string senderName, int? userId = null)
+        {
+            try
+            {
+                using (var chatDao = new ChatMessageDao())
+                {
+                    chatDao.Insert(new ChatMessage
+                    {
+                        UserId = userId, // null khi dang ky chua xac thuc; khach quen mat khau co UserId ngay
+                        Email = email,
+                        Phone = phone,
+                        Sender = "Hệ thống",
+                        Content = content,
+                        IsSystem = true,
+                        Status = true
+                    });
+                }
+            }
+            catch (Exception)
+            {
+                // Chat la kenh phu: loi ghi chat khong duoc lam treo luong OTP chinh
+            }
         }
     }
 }
