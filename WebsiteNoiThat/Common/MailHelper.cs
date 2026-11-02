@@ -57,7 +57,11 @@ namespace WebsiteNoiThat.Common
         }
 
         /// <summary>
-        /// Gửi Email hỗ trợ UTF-8, tự động bắt lỗi và trả về true/false
+        /// Gửi Email hỗ trợ UTF-8 qua SMTP cấu hình trong Web.config.
+        /// Mặc định dùng Gmail SMTP (smtp.gmail.com:587) - issue #75: để mail xác thực
+        /// đăng ký/lấy mật khẩu tới được MỌI địa chỉ email (Resend onboarding@resend.dev
+        /// chỉ nhận được mail tại chính chủ tài khoản nên mail gửi người khác không tới).
+        /// Trả về true/false; gửi thất bại thì chuyển sang kênh dự phòng cho môi trường dev.
         /// </summary>
         public static bool SendMail(string toEmailAddress, string subject, string content)
         {
@@ -71,10 +75,12 @@ namespace WebsiteNoiThat.Common
 
         var fromEmailAddress = ConfigurationManager.AppSettings["FromEmailAddress"];
         var fromEmailDisplayName = ConfigurationManager.AppSettings["FromEmailDisplayName"] ?? "Website Nội Thất";
-        var fromEmailPassword = ConfigurationManager.AppSettings["FromEmailPassword"]; // Đây chính là API Key re_...
-        var smtpHost = ConfigurationManager.AppSettings["SMTPHost"] ?? "smtp.resend.com";
+        var fromEmailPassword = ConfigurationManager.AppSettings["FromEmailPassword"]; // Gmail: App Password 16 ký tự
+        var smtpHost = ConfigurationManager.AppSettings["SMTPHost"] ?? "smtp.gmail.com";
         var smtpPortStr = ConfigurationManager.AppSettings["SMTPPort"];
         var sslStr = ConfigurationManager.AppSettings["EnabledSSL"];
+        // Tài khoản đăng nhập SMTP: mặc định dùng chính email gửi đi (Gmail yêu cầu trùng)
+        var smtpUser = ConfigurationManager.AppSettings["SMTPUser"] ?? fromEmailAddress;
 
         // Xử lý cổng Port an toàn (mặc định là 587 nếu chưa cấu hình)
         int smtpPort = 587;
@@ -109,8 +115,9 @@ namespace WebsiteNoiThat.Common
                 client.EnableSsl = enabledSsl;
                 client.UseDefaultCredentials = false;
 
-                // SỬA QUAN TRỌNG: Username kết nối đến Resend bắt buộc cố định là chữ "resend" viết thường!
-                client.Credentials = new NetworkCredential("resend", fromEmailPassword);
+                // Gmail SMTP: user đăng nhập là địa chỉ Gmail, mật khẩu là App Password 16 ký tự
+                // (tạo tại: Bảo mật tài khoản Google -> Xác minh 2 bước -> Mật khẩu ứng dụng)
+                client.Credentials = new NetworkCredential(smtpUser, fromEmailPassword);
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
 
                 client.Send(message);
@@ -139,6 +146,9 @@ namespace WebsiteNoiThat.Common
             {
                 try
                 {
+                    // Đánh dấu: mail này đi qua kênh dự phòng (SMTP không gửi được) ->
+                    // controller đọc cờ này để hiện luôn mã OTP trên trang xác thực (dev)
+                    LastSentViaDevFallback = true;
                     SaveMailToFile(toEmailAddress, subject, content);
                     return true; // Đã "gửi" qua kênh file trong môi trường dev
                 }

@@ -179,6 +179,13 @@ namespace WebsiteNoiThat.Controllers
                 return View(model);
             }
 
+            // Chế độ dev: mail phải lưu ra file (SMTP không gửi được) -> hiện luôn mã OTP
+            // trên trang xác thực để tester không phải đi mở file (dựa theo PR #85)
+            if (MailHelper.LastSentViaDevFallback)
+            {
+                TempData["DevOtp"] = otp;
+            }
+
             // Issue #114: đồng thời gửi OTP vào kênh Chat nội bộ của site
             SendOtpToChat(model.Email, ChatMessageDao.NormalizePhone(model.Phone),
                 string.Format("Mã OTP kích hoạt tài khoản của bạn là: {0}\nMã có hiệu lực trong 5 phút. Vui lòng không chia sẻ cho bất kỳ ai.", otp),
@@ -304,6 +311,13 @@ namespace WebsiteNoiThat.Controllers
                 TempData["OtpError"] = "Không thể gửi lại email xác thực. Vui lòng thử lại sau!";
                 return RedirectToAction("VerifyRegisterOtp");
             }
+
+            // Chế độ dev: mail gửi qua kênh dự phòng -> hiện mã OTP mới ngay trên trang xác thực
+            if (MailHelper.LastSentViaDevFallback)
+            {
+                TempData["DevOtp"] = otp;
+            }
+
             TempData["OtpResent"] = "Đã gửi lại mã OTP mới về email của bạn.";
 
             // Issue #114: gửi OTP vào chat nội bộ (thread đang chờ xác thực)
