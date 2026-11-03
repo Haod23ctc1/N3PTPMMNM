@@ -102,30 +102,17 @@
     <div id="home">
         <div class="container">
             <section id="featured">
-                @*video banner - thay the slider hinh anh (theo yeu cua shop, bat dau tu giay 16)*@
-                <style>
-                    .video-banner { margin: 0 auto 26px; max-width: 1000px; }
-                    .video-banner iframe {
-                        display: block;
-                        width: 100%;
-                        aspect-ratio: 16/9;
-                        border: 0;
-                        border-radius: 4px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,.15);
-                    }
-                    /* Với trình duyệt không hỗ trợ aspect-ratio: chiều cao cứng */
-                    .video-banner iframe { height: 506px; }
-                    @@supports (aspect-ratio: 16/9) {
-                        .video-banner iframe { height: auto; }
-                    }
-                </style>
-                <div class="video-banner">
-                    <iframe src="https://www.youtube.com/embed/hE1JBFKSlVQ?start=16&autoplay=1&loop=1&playlist=hE1JBFKSlVQ&controls=1&rel=0"
-                            title="Video giới thiệu nội thất"
-                            allow="autoplay; encrypted-media; picture-in-picture"
-                            allowfullscreen></iframe>
+                                @*slider - khoi phuc may chay hinh anh tu dong (chu ky 2s, co nut prev/next)*@
+                <div >
+                    <div>
+                        <img class="slider" src="~/image/slide1.jpg" stt="0" alt="" />
+                        <img class="slider" src="~/image/slide2.jpg" stt="1" alt="" style="display:none;" />
+                        <img class="slider" src="~/image/slide3.jpg" alt="" stt="2" style="display:none;" />
+                        <img class="slider" src="~/image/slide4.jpg" alt="" stt="3" style="display:none;" />
+                        <a href="" id="prev"><img src="~/image/Previous-icon.png" /></a>
+                        <a href="" id="next"><img src="~/image/Next-2-2-icon.png" /></a>
+                    </div>
                 </div>
-                @*banner*@
                 <div class="banner clearfix">
                     <div class="col-xs-12 col-sm-6">
                         <img src="~/images/banner1.png" alt="">
