@@ -76,10 +76,14 @@
                                         <h1 class="h4 text-gray-900 mb-4">Tạo tài khoản mới!</h1>
                                     </div>
 
-                                    @using (Html.BeginForm("Register", "RegisterAndLogin", FormMethod.Post))
+                                    @using (Html.BeginForm("Register", "RegisterAndLogin", FormMethod.Post, new { enctype = "multipart/form-data" }))
                                     {
                                         @Html.AntiForgeryToken()
                                         @Html.ValidationSummary(false, "", new { @class = "text-danger text-center mb-3" })
+                                        <div class="alert alert-info">
+                                            Sau khi xác nhận email, bạn cần gửi ảnh CCCD hoặc hộ chiếu để ADMIN/MOD duyệt.
+                                            Chỉ tài khoản đã được duyệt mới có thể đặt lại mật khẩu.
+                                        </div>
 
                                         if (ViewBag.Success != null)
                                         {
@@ -132,6 +136,33 @@
                                                 @Html.ValidationMessageFor(model => model.Phone, "", new { @class = "text-danger small pl-3" })
                                             </div>
 
+                                            <div class="form-group">
+                                                <label for="DocumentType">Loại giấy tờ tùy thân</label>
+                                                <select id="DocumentType" name="DocumentType" class="form-control" required>
+                                                    <option value="">-- Chọn loại giấy tờ --</option>
+                                                    <option value="CCCD">Căn cước công dân (CCCD)</option>
+                                                    <option value="Passport">Hộ chiếu</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                @Html.TextBoxFor(model => model.DocumentNumber, new { @class = "form-control form-control-user", @placeholder = "Số trên giấy tờ (5-20 ký tự)", @autocomplete = "off" })
+                                                @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger small pl-3" })
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="frontDocument">Ảnh mặt trước / trang thông tin hộ chiếu (JPEG/PNG, tối đa 1,5 MB)</label>
+                                                <input id="frontDocument" type="file" name="frontDocument" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="form-control" required />
+                                            </div>
+                                            <div class="form-group" id="backDocumentGroup">
+                                                <label for="backDocument">Ảnh mặt sau CCCD</label>
+                                                <input id="backDocument" type="file" name="backDocument" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="form-control" />
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" name="documentConsent" value="true" required />
+                                                    Tôi đồng ý gửi ảnh giấy tờ cho ADMIN/MOD kiểm tra. Nếu hồ sơ được duyệt, ảnh gốc được lưu riêng tư để đối chiếu khi khôi phục tài khoản; nếu bị từ chối, ảnh sẽ được xóa.
+                                                </label>
+                                            </div>
+
                                             <!-- Widget Google "Tôi không phải là robot" chuẩn thực tế -->
                                             <div class="form-group captcha-wrapper">
                                                 <div class="g-recaptcha" data-sitekey="@siteKey"></div>
@@ -177,6 +208,16 @@
     <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
     <script>
         window.addEventListener('load', function () {
+            var documentType = document.getElementById('DocumentType');
+            var backGroup = document.getElementById('backDocumentGroup');
+            var backDocument = document.getElementById('backDocument');
+            if (documentType && backGroup && backDocument) {
+                documentType.addEventListener('change', function () {
+                    var isCccd = documentType.value === 'CCCD';
+                    backGroup.style.display = documentType.value === 'Passport' ? 'none' : 'block';
+                    backDocument.required = isCccd;
+                });
+            }
             if (window.jQuery && window.jQuery.validator) {
                 window.jQuery.extend(window.jQuery.validator.messages, {
                     required: "Vui lòng điền thông tin này.",

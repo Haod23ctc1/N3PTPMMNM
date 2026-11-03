@@ -1,0 +1,51 @@
+@model Models.EF.IdentityVerification
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var user = ViewBag.User as Models.EF.User;
+}
+
+<h2>Kiểm tra giấy tờ #@Model.IdentityVerificationId</h2>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+<dl class="dl-horizontal">
+    <dt>Tài khoản</dt>
+    <dd>@(user == null ? Model.UserId.ToString() : user.Username)</dd>
+    <dt>Họ tên khai báo</dt>
+    <dd>@(user == null ? "" : user.Name)</dd>
+    <dt>Email</dt>
+    <dd>@(user == null ? "" : user.Email)</dd>
+    <dt>Loại giấy tờ</dt>
+    <dd>@Model.DocumentType</dd>
+    <dt>Ngày gửi</dt>
+    <dd>@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+</dl>
+<p>Kiểm tra thủ công tính rõ nét và giấy tờ. Nếu duyệt, ảnh gốc được lưu riêng tư để ADMIN/MOD có thể so sánh khi khôi phục tài khoản; nếu từ chối, ảnh bị xóa. Đọc số trên ảnh rồi nhập bên dưới; hệ thống sẽ so khớp với số đã khai báo (chỉ lưu dạng HMAC, không lưu số rõ). Đây không phải xác minh tự động từ cơ quan cấp giấy tờ.</p>
+<div class="row">
+    <div class="col-md-6">
+        <h4>Mặt trước / trang thông tin</h4>
+        <img src="@Url.Action("Document", new { id = Model.IdentityVerificationId, side = "front" })" alt="Mặt trước giấy tờ" class="img-responsive img-thumbnail" />
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.BackFileName))
+    {
+        <div class="col-md-6">
+            <h4>Mặt sau</h4>
+            <img src="@Url.Action("Document", new { id = Model.IdentityVerificationId, side = "back" })" alt="Mặt sau giấy tờ" class="img-responsive img-thumbnail" />
+        </div>
+    }
+</div>
+<hr />
+<form method="post" action="@Url.Action("Approve")" style="display:inline-block">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.IdentityVerificationId" />
+    <input type="text" name="documentNumber" maxlength="20" required class="form-control" placeholder="Số đọc trên giấy tờ" style="display:inline-block; width:220px" />
+    <button type="submit" class="btn btn-success">Đối chiếu và duyệt</button>
+</form>
+<form method="post" action="@Url.Action("Reject")" style="display:inline-block; margin-left:12px">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.IdentityVerificationId" />
+    <input type="text" name="reviewNote" maxlength="500" required class="form-control" placeholder="Lý do từ chối" style="display:inline-block; width:280px" />
+    <button type="submit" class="btn btn-danger">Từ chối</button>
+</form>
+<p style="margin-top:20px"><a href="@Url.Action("Index")">Quay lại danh sách hồ sơ</a></p>

@@ -71,6 +71,8 @@
     <Compile Include="EF\Credential.cs" />
     <Compile Include="EF\DBNoiThat.cs" />
     <Compile Include="EF\Feedback.cs" />
+    <Compile Include="EF\IdentityVerification.cs" />
+    <Compile Include="EF\PasswordResetVerification.cs" />
     <Compile Include="EF\News.cs" />
     <Compile Include="EF\Order.cs" />
     <Compile Include="EF\OrderDetail.cs" />

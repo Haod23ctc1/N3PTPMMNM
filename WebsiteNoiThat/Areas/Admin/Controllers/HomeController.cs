@@ -9,7 +9,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
     public class HomeController : Controller
     {
         // GET: Admin/Home
-        public ActionResult Index()
+        public virtual ActionResult Index()
         {
             var session = (UserLogin)Session[WebsiteNoiThat.Common.Commoncontent.user_sesion_admin];
             if ( session != null)

@@ -804,18 +804,65 @@ ul.ulspmobi {
 }
 
 #account_cart {
-    text-align: right
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 22px;
+    text-align: right;
+    white-space: nowrap;
 }
 
 #btn_account {
-    width: 40px;
     border: none;
     background: white;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    min-width: 0;
+}
+
+#a_account img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+#a_account {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    vertical-align: middle;
 }
 
 #account_dropdown {
-    margin-top: 13px;
+    margin-top: 0;
     font-size: unset;
+}
+
+.account-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    vertical-align: middle;
+}
+
+.account-dropdown > .dropdown-toggle {
+    min-width: 24px;
+    padding: 6px 4px;
+    line-height: 1;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #000;
+}
+
+.account-dropdown > .dropdown-toggle::after {
+    margin-left: 0;
+}
+
+.account-dropdown:hover > .dropdown-menu,
+.account-dropdown:focus-within > .dropdown-menu {
+    display: block;
 }
 
 /*#account_dropdown li {
@@ -825,10 +872,31 @@ ul.ulspmobi {
 #account_dropdown li a:hover {
     background:lightgrey;
 }
+
+#account_dropdown .identity-verification-icon {
+    width: 16px;
+    height: 14px;
+    color: #000;
+    margin-right: 5px;
+    vertical-align: -2px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 #btn_cart {
+    display: inline-flex;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
     width: 40px;
+    height: 40px;
+    padding: 0;
     border: none;
     background: white;
+    margin-left: 4px;
 }
 
 .dropdown:hover > .dropdown-menu {

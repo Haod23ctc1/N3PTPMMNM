@@ -10,8 +10,6 @@
             <p>Hệ thống đã gửi mã OTP xác nhận về địa chỉ email: <b>@ViewBag.Email</b></p>
         </div>
         <div class="panel-body">
-<<<<<<< HEAD
-=======
             @if (TempData["DevOtp"] != null)
             {
                 <div class="alert alert-warning text-center" style="border-left: 5px solid #f0ad4e;">
@@ -19,7 +17,6 @@
                     <b style="font-size: 26px; letter-spacing: 8px; color: #4e73df;">@TempData["DevOtp"]</b>
                 </div>
             }
->>>>>>> main
             @if (TempData["OtpResent"] != null)
             {
                 <div class="alert alert-info">@TempData["OtpResent"]</div>

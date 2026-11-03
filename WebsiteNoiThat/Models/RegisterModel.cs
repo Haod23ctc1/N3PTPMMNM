@@ -44,6 +44,14 @@ namespace WebsiteNoiThat.Models
         [RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Số điện thoại không hợp lệ (VD: 0901234567).")]
         public string Phone { set; get; }
 
+        [Required(ErrorMessage = "Vui lòng chọn loại giấy tờ tùy thân.")]
+        public string DocumentType { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập số giấy tờ tùy thân.")]
+        [StringLength(20, MinimumLength = 5, ErrorMessage = "Số giấy tờ phải có từ 5 đến 20 ký tự.")]
+        [RegularExpression(@"^[a-zA-Z0-9 -]+$", ErrorMessage = "Số giấy tờ chỉ được chứa chữ và số.")]
+        public string DocumentNumber { get; set; }
+
         public int CartId { get; set; }
     }
 }

@@ -1,0 +1,88 @@
+@{
+    ViewBag.Title = "Xác minh danh tính";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string identityStatus = ViewBag.IdentityStatus as string;
+}
+
+<div class="container" style="max-width: 720px; margin: 35px auto;">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3>Xác minh giấy tờ tùy thân</h3></div>
+        <div class="panel-body">
+            @if (TempData["IdentitySubmitted"] != null)
+            {
+                <div class="alert alert-success">Đã gửi hồ sơ. Tài khoản chỉ được đặt lại mật khẩu sau khi quản trị viên duyệt.</div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+            }
+
+            @if (identityStatus == "Approved")
+            {
+                <div class="alert alert-success">Danh tính đã được xác minh. Bạn có thể sử dụng chức năng quên mật khẩu.</div>
+            }
+            else if (identityStatus == "Pending")
+            {
+                <div class="alert alert-info">Hồ sơ đang chờ quản trị viên kiểm tra. Bạn chưa thể đặt lại mật khẩu cho đến khi hồ sơ được duyệt.</div>
+            }
+            else
+            {
+                if (identityStatus == "Rejected")
+                {
+                    <div class="alert alert-danger">
+                        Hồ sơ trước đó chưa được chấp nhận. Ghi chú: @(ViewBag.ReviewNote ?? "Vui lòng gửi lại ảnh rõ ràng, hợp lệ.")
+                    </div>
+                }
+                <p>Chọn CCCD hoặc hộ chiếu. Ảnh được lưu trong vùng riêng tư để ADMIN/MOD kiểm tra. Nếu hồ sơ được duyệt, ảnh gốc được giữ để đối chiếu khi khôi phục tài khoản; nếu bị từ chối, ảnh sẽ bị xóa. Chỉ nhận JPEG/PNG, tối đa 1,5 MB mỗi ảnh.</p>
+                <p>Việc kiểm tra do nhân viên thực hiện thủ công; hệ thống không kết nối cơ quan cấp giấy tờ để xác minh tự động.</p>
+                using (Html.BeginForm("Submit", "IdentityVerification", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="form-group">
+                        <label for="documentType">Loại giấy tờ</label>
+                        <select id="documentType" name="documentType" class="form-control" required>
+                            <option value="">-- Chọn loại giấy tờ --</option>
+                            <option value="CCCD">Căn cước công dân (CCCD)</option>
+                            <option value="Passport">Hộ chiếu</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="frontDocument">Ảnh mặt trước / trang thông tin hộ chiếu</label>
+                        <input id="frontDocument" type="file" name="frontDocument" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="form-control" required />
+                    </div>
+                    <div class="form-group" id="backDocumentGroup">
+                        <label for="backDocument">Ảnh mặt sau CCCD</label>
+                        <input id="backDocument" type="file" name="backDocument" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="form-control" />
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="documentConsent" value="true" required />
+                            Tôi đồng ý gửi ảnh giấy tờ cho ADMIN/MOD kiểm tra. Nếu hồ sơ được duyệt, ảnh gốc được lưu riêng tư để đối chiếu khi khôi phục tài khoản; nếu bị từ chối, ảnh sẽ được xóa.
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Gửi hồ sơ xác minh</button>
+                }
+            }
+            <div class="identity-verification-navigation" style="margin-top: 20px;">
+                <a href="/" class="btn btn-default" onclick="if (window.history.length > 1) { window.history.back(); return false; }">Quay lại trang trước</a>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-default">Trang chủ</a>
+                <a href="@Url.Action("Login", "RegisterAndLogin")" class="btn btn-link">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var type = document.getElementById("documentType");
+        var backGroup = document.getElementById("backDocumentGroup");
+        var backInput = document.getElementById("backDocument");
+        if (type && backGroup && backInput) {
+            type.addEventListener("change", function () {
+                var required = type.value === "CCCD";
+                backGroup.style.display = type.value === "Passport" ? "none" : "block";
+                backInput.required = required;
+            });
+        }
+    })();
+</script>

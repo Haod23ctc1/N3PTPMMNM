@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
 using Models.DAO;
@@ -20,6 +21,7 @@ namespace WebsiteNoiThat.Controllers
         // GET /Chat - xem chat (can dang nhap, hoac tra cuu bang Email + Phone)
         public ActionResult Index()
         {
+            ViewBag.ChatError = TempData["ChatError"];
             var session = (UserLogin)Session[Commoncontent.user_sesion];
             if (session != null)
             {
@@ -29,9 +31,20 @@ namespace WebsiteNoiThat.Controllers
                     if (user != null)
                     {
                         ViewBag.ThreadEmail = user.Email;
-                        ViewBag.Identified = true;
                         ViewBag.WelcomeName = user.Name ?? user.Username;
-                        return View(dao.ListThreadForUser(session.UserId, user.Email));
+                        try
+                        {
+                            ViewBag.Identified = true;
+                            return View(dao.ListThreadForUser(session.UserId, user.Email));
+                        }
+                        catch (SqlException ex) when (ex.Number == 208)
+                        {
+                            System.Diagnostics.Trace.TraceError("ChatMessage table is missing: " + ex);
+                            ModelState.AddModelError("", "Tính năng tin nhắn chưa được cài đặt trên cơ sở dữ liệu. " +
+                                "Hãy chạy SQL/2026-11-01_tao_bang_chatmessage.sql trên database DBNoiThat rồi thử lại.");
+                            ViewBag.Identified = false;
+                            return View(new List<ChatMessage>());
+                        }
                     }
                 }
             }
@@ -53,7 +66,20 @@ namespace WebsiteNoiThat.Controllers
                 return View("Index", new List<ChatMessage>());
             }
 
-            var msgs = dao.ListGuestThread(email, phone);
+            List<ChatMessage> msgs;
+            try
+            {
+                msgs = dao.ListGuestThread(email, phone);
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                System.Diagnostics.Trace.TraceError("ChatMessage table is missing: " + ex);
+                ModelState.AddModelError("", "Tính năng tin nhắn chưa được cài đặt trên cơ sở dữ liệu. " +
+                    "Hãy chạy SQL/2026-11-01_tao_bang_chatmessage.sql trên database DBNoiThat rồi thử lại.");
+                ViewBag.Identified = false;
+                return View("Index", new List<ChatMessage>());
+            }
+
             if (msgs.Count == 0)
             {
                 // Co the khach nhap phone dang "090..." trong khi DB luu dang int ->
@@ -95,19 +121,28 @@ namespace WebsiteNoiThat.Controllers
                 content = content.Substring(0, ChatMessage.MAX_NVARCHAR);
             }
 
-            using (var db = new DBNoiThat())
+            try
             {
-                var user = db.Users.Find(session.UserId);
-                dao.Insert(new ChatMessage
+                using (var db = new DBNoiThat())
                 {
-                    UserId = session.UserId,
-                    Email = user != null ? user.Email : null,
-                    Phone = user != null ? user.Phone.ToString() : null,
-                    Sender = user != null ? (user.Name ?? user.Username) : session.Username,
-                    Content = content,
-                    IsSystem = false,
-                    Status = true
-                });
+                    var user = db.Users.Find(session.UserId);
+                    dao.Insert(new ChatMessage
+                    {
+                        UserId = session.UserId,
+                        Email = user != null ? user.Email : null,
+                        Phone = user != null ? user.Phone.ToString() : null,
+                        Sender = user != null ? (user.Name ?? user.Username) : session.Username,
+                        Content = content,
+                        IsSystem = false,
+                        Status = true
+                    });
+                }
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                System.Diagnostics.Trace.TraceError("ChatMessage table is missing: " + ex);
+                TempData["ChatError"] = "Tính năng tin nhắn chưa được cài đặt trên cơ sở dữ liệu. " +
+                    "Hãy chạy SQL/2026-11-01_tao_bang_chatmessage.sql trên database DBNoiThat rồi thử lại.";
             }
             return RedirectToAction("Index");
         }

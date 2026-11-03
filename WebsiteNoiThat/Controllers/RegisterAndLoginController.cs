@@ -5,13 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
+using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
 using System.Web;
 using System.Web.Mvc;
 using WebsiteNoiThat.Areas.Admin.Models;
-using Models.DAO;
-using Models.EF;
 using WebsiteNoiThat.Common;
 using WebsiteNoiThat.Models;
 
@@ -146,13 +147,44 @@ namespace WebsiteNoiThat.Controllers
         }
 
         [HttpPost]
-        public ActionResult Register(RegisterModel model)
+        [ValidateAntiForgeryToken]
+        public ActionResult Register(RegisterModel model, HttpPostedFileBase frontDocument,
+            HttpPostedFileBase backDocument, bool documentConsent = false)
         {
             // 1. Kiểm tra Captcha
             if (!ValidateRobotCaptcha())
             {
                 ModelState.AddModelError("", "Vui lòng xác nhận bạn không phải là robot!");
                 return View(model);
+            }
+
+            if (model.DocumentType != "CCCD" && model.DocumentType != "Passport")
+            {
+                ModelState.AddModelError("DocumentType", "Vui lòng chọn CCCD hoặc hộ chiếu.");
+            }
+            if (!documentConsent)
+            {
+                ModelState.AddModelError("", "Bạn cần đồng ý với việc sử dụng ảnh giấy tờ để xác minh danh tính.");
+            }
+            if (model.DocumentType == "CCCD" && (backDocument == null || backDocument.ContentLength <= 0))
+            {
+                ModelState.AddModelError("backDocument", "CCCD cần ảnh cả mặt trước và mặt sau.");
+            }
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    IdentityDocumentStorage.ComputeDocumentNumberHash(model.DocumentNumber);
+                }
+                catch (ArgumentException ex)
+                {
+                    ModelState.AddModelError("DocumentNumber", ex.Message);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    System.Diagnostics.Trace.TraceError("Identity document HMAC configuration error: " + ex);
+                    ModelState.AddModelError("", "Chức năng xác minh giấy tờ chưa được cấu hình an toàn. Vui lòng liên hệ quản trị viên.");
+                }
             }
 
             if (ModelState.IsValid)
@@ -171,11 +203,37 @@ namespace WebsiteNoiThat.Controllers
                     return View(model);
                 }
 
+                string frontFileName = null;
+                string backFileName = null;
+                try
+                {
+                    frontFileName = IdentityDocumentStorage.Save(frontDocument);
+                    if (model.DocumentType == "CCCD")
+                    {
+                        backFileName = IdentityDocumentStorage.Save(backDocument);
+                    }
+                }
+                catch (InvalidDataException ex)
+                {
+                    IdentityDocumentStorage.Delete(frontFileName);
+                    IdentityDocumentStorage.Delete(backFileName);
+                    ModelState.AddModelError("", ex.Message);
+                    return View(model);
+                }
+
+                string oldFrontFileName = Session["Register_IdentityFrontFile"] as string;
+                string oldBackFileName = Session["Register_IdentityBackFile"] as string;
+                Session["Register_IdentityFrontFile"] = frontFileName;
+                Session["Register_IdentityBackFile"] = backFileName;
+                IdentityDocumentStorage.Delete(oldFrontFileName);
+                IdentityDocumentStorage.Delete(oldBackFileName);
+
                 // 2. Tạo mã OTP gửi về Email xác nhận
                 string otp = MailHelper.GenerateOTP();
+                DateTime otpExpireTime = DateTime.Now.AddMinutes(5);
                 Session["Register_Data"] = model;
                 Session["Register_OTP"] = otp;
-                Session["Register_ExpireTime"] = DateTime.Now.AddMinutes(5);
+                Session["Register_ExpireTime"] = otpExpireTime;
 
                 string body = $@"
                     <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e3e6f0; border-radius: 8px; max-width: 500px;'>
@@ -207,6 +265,7 @@ namespace WebsiteNoiThat.Controllers
             {
                 TempData["DevOtp"] = otp;
             }
+            StoreDemoOtpOnHome(otp, otpExpireTime);
 
             // Issue #114: đồng thời gửi OTP vào kênh Chat nội bộ của site
             SendOtpToChat(model.Email, ChatMessageDao.NormalizePhone(model.Phone),
@@ -260,6 +319,26 @@ namespace WebsiteNoiThat.Controllers
                 return View();
             }
 
+            var frontFileName = Session["Register_IdentityFrontFile"] as string;
+            var backFileName = Session["Register_IdentityBackFile"] as string;
+            if (string.IsNullOrWhiteSpace(frontFileName))
+            {
+                ModelState.AddModelError("", "Không tìm thấy ảnh giấy tờ đã gửi. Vui lòng đăng ký lại.");
+                return View();
+            }
+
+            string documentNumberHash;
+            try
+            {
+                documentNumberHash = IdentityDocumentStorage.ComputeDocumentNumberHash(registerData.DocumentNumber);
+            }
+            catch (InvalidOperationException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Identity document HMAC configuration error: " + ex);
+                ModelState.AddModelError("", "Chức năng xác minh giấy tờ chưa được cấu hình an toàn. Vui lòng liên hệ quản trị viên.");
+                return View();
+            }
+
             // OTP đúng -> Bắt đầu ghi người dùng vào CSDL
             int.TryParse(registerData.Phone, out int phone); // Regex đã đảm bảo chuỗi là số
             var dao = new UserDao();
@@ -278,22 +357,50 @@ namespace WebsiteNoiThat.Controllers
             var result = dao.Insert(user);
             if (result > 0)
             {
-                // Dọn dẹp session
+                var newUser = db.Users.SingleOrDefault(n => n.Username == registerData.UserName);
+                if (newUser == null)
+                {
+                    ModelState.AddModelError("", "Không tìm thấy tài khoản vừa tạo. Vui lòng liên hệ hỗ trợ.");
+                    return View();
+                }
+
+                db.IdentityVerifications.Add(new IdentityVerification
+                {
+                    UserId = newUser.UserId,
+                    DocumentType = registerData.DocumentType,
+                    DocumentNumberHash = documentNumberHash,
+                    FrontFileName = frontFileName,
+                    BackFileName = backFileName,
+                    Status = "Pending",
+                    SubmittedAt = DateTime.Now
+                });
+                db.SaveChanges();
+
+                Session["IdentityVerificationUserId"] = newUser.UserId;
                 Session.Remove("Register_Data");
                 Session.Remove("Register_OTP");
                 Session.Remove("Register_ExpireTime");
-
-                var newUser = db.Users.SingleOrDefault(n => n.Username == registerData.UserName);
+                Session.Remove("DemoOtp");
+                Session.Remove("DemoOtpExpireTime");
+                Session.Remove("Register_IdentityFrontFile");
+                Session.Remove("Register_IdentityBackFile");
 
                 // Issue #114: sau khi tài khoản được tạo, gắn thread chat "khách" (trước đó
                 // đã nhận tin nhắn OTP đăng ký) vào UserId mới để khách login xem đủ lịch sử
-                if (newUser != null)
+                try
                 {
-                    new ChatMessageDao().LinkGuestThreadToUser(registerData.Email,
-                        ChatMessageDao.NormalizePhone(registerData.Phone), newUser.UserId);
+                    using (var chatDao = new ChatMessageDao())
+                    {
+                        chatDao.LinkGuestThreadToUser(registerData.Email,
+                            ChatMessageDao.NormalizePhone(registerData.Phone), newUser.UserId);
+                    }
+                }
+                catch (SqlException ex) when (ex.Number == 208)
+                {
+                    System.Diagnostics.Trace.TraceError("ChatMessage table is missing: " + ex);
                 }
 
-                return RedirectToAction("Card", new { UserId = newUser.UserId });
+                return RedirectToAction("Submit", "IdentityVerification");
             }
 
             ModelState.AddModelError("", "Đăng ký không thành công. Vui lòng thử lại!");
@@ -312,8 +419,9 @@ namespace WebsiteNoiThat.Controllers
             }
 
             string otp = MailHelper.GenerateOTP();
+            DateTime otpExpireTime = DateTime.Now.AddMinutes(5);
             Session["Register_OTP"] = otp;
-            Session["Register_ExpireTime"] = DateTime.Now.AddMinutes(5);
+            Session["Register_ExpireTime"] = otpExpireTime;
 
             string body = $@"
                 <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e3e6f0; border-radius: 8px; max-width: 500px;'>
@@ -337,6 +445,7 @@ namespace WebsiteNoiThat.Controllers
             {
                 TempData["DevOtp"] = otp;
             }
+            StoreDemoOtpOnHome(otp, otpExpireTime);
 
             TempData["OtpResent"] = "Đã gửi lại mã OTP mới về email của bạn.";
 
@@ -351,14 +460,32 @@ namespace WebsiteNoiThat.Controllers
         [HttpGet]
         public ActionResult ForgotPassword()
         {
+            int? verificationId = Session["ResetVerificationId"] as int?;
+            if (verificationId.HasValue)
+            {
+                var verification = db.PasswordResetVerifications.Find(verificationId.Value);
+                if (verification != null)
+                {
+                    ViewBag.ResetVerificationStatus = verification.Status;
+                    ViewBag.ResetVerificationNote = verification.ReviewNote;
+                    if (verification.Status == "Approved")
+                    {
+                        PopulateResetOtpView(verification);
+                    }
+                }
+            }
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ForgotPassword(string Email)
+        public ActionResult ForgotPassword(string Email, string DocumentType,
+            string DocumentNumber, HttpPostedFileBase frontDocument, HttpPostedFileBase backDocument,
+            bool documentConsent = false)
         {
-            // 1. BẮT BUỘC KIỂM TRA CAPTCHA TRƯỚC TIÊN
+            ViewBag.Email = Email;
+            ViewBag.DocumentType = DocumentType;
+            ViewBag.DocumentNumber = DocumentNumber;
             if (!ValidateRobotCaptcha())
             {
                 ModelState.AddModelError("", "Vui lòng xác minh 'Tôi không phải là người máy'!");
@@ -370,8 +497,6 @@ namespace WebsiteNoiThat.Controllers
                 ModelState.AddModelError("", "Vui lòng nhập địa chỉ email!");
                 return View();
             }
-
-            // 2. Kiểm tra email có trong Database không
             var user = db.Users.FirstOrDefault(x => x.Email.ToLower() == Email.Trim().ToLower());
             if (user == null)
             {
@@ -379,47 +504,195 @@ namespace WebsiteNoiThat.Controllers
                 return View();
             }
 
-            // 3. Tạo mã OTP (dùng MailHelper chuẩn)
-            string otp = MailHelper.GenerateOTP();
-            Session["Reset_OTP"] = otp;
-            Session["Reset_Email"] = user.Email;
-            Session["Reset_ExpireTime"] = DateTime.Now.AddMinutes(5);
-
-            // 4. Nội dung gửi mail
-            string body = $@"
-                <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e3e6f0; border-radius: 8px; max-width: 500px;'>
-                    <h3 style='color: #4e73df; margin-top: 0;'>Khôi phục mật khẩu</h3>
-                    <p>Xin chào <b>{user.Name ?? user.Username}</b>,</p>
-                    <p>Mã OTP xác thực đặt lại mật khẩu của bạn là:</p>
-                    <div style='text-align: center; margin: 20px 0;'>
-                        <span style='font-size: 28px; font-weight: bold; color: #e74a3b; letter-spacing: 6px; background: #f8f9fc; padding: 10px 20px; border-radius: 6px; border: 1px dashed #d1d3e2;'>{otp}</span>
-                    </div>
-                    <p style='color: #858796; font-size: 13px;'>Mã này có hiệu lực trong <b>5 phút</b>. Vui lòng không cung cấp mã này cho người khác.</p>
-                </div>";
-
-            bool sent = MailHelper.SendMail(user.Email, "Mã OTP khôi phục mật khẩu - Website Nội Thất", body);
-            if (!sent)
+            IdentityVerification identityVerification;
+            try
             {
-                ModelState.AddModelError("", "Không thể gửi email. Vui lòng kiểm tra lại cấu hình hoặc thử lại sau!");
+                identityVerification = db.IdentityVerifications
+                    .SingleOrDefault(x => x.UserId == user.UserId);
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                System.Diagnostics.Trace.TraceError("IdentityVerification table is missing: " + ex);
+                ModelState.AddModelError("", "Chức năng xác minh chưa được cài đặt trong cơ sở dữ liệu. " +
+                    "Hãy chạy SQL/2026-11-03_tao_bang_identityverification.sql trên DBNoiThat.");
+                return View();
+            }
+            if (identityVerification == null || identityVerification.Status != "Approved")
+            {
+                ModelState.AddModelError("", "Tài khoản chưa được ADMIN/MOD xác minh giấy tờ tùy thân. " +
+                    "Hãy hoàn tất hồ sơ xác minh trước khi yêu cầu đặt lại mật khẩu, hoặc liên hệ hỗ trợ nếu hồ sơ bị từ chối.");
                 return View();
             }
 
-            // Issue #114: gửi OTP lấy lại mật khẩu vào kênh Chat nội bộ của tài khoản
-            SendOtpToChat(user.Email, ChatMessageDao.NormalizePhone(user.Phone.ToString()),
-                string.Format("Mã OTP khôi phục mật khẩu của bạn là: {0}\nMã có hiệu lực trong 5 phút. Vui lòng không chia sẻ cho bất kỳ ai.", otp),
-                user.Name ?? user.Username, user.UserId);
+            if (string.IsNullOrWhiteSpace(identityVerification.DocumentNumberHash) ||
+                string.IsNullOrWhiteSpace(identityVerification.DocumentType))
+            {
+                ModelState.AddModelError("", "Hồ sơ đăng ký chưa có dữ liệu giấy tờ để đối chiếu. Vui lòng liên hệ quản trị viên.");
+                return View();
+            }
+            if (string.IsNullOrWhiteSpace(identityVerification.FrontFileName))
+            {
+                ModelState.AddModelError("", "Hồ sơ đăng ký không còn ảnh giấy tờ gốc để so sánh. Vui lòng liên hệ quản trị viên.");
+                return View();
+            }
+            if (DocumentType != identityVerification.DocumentType)
+            {
+                ModelState.AddModelError("DocumentType", "Loại giấy tờ không trùng với hồ sơ đã xác minh.");
+                return View();
+            }
+            if (string.IsNullOrWhiteSpace(DocumentNumber))
+            {
+                ModelState.AddModelError("DocumentNumber", "Vui lòng nhập số giấy tờ đã đăng ký.");
+                return View();
+            }
+            bool documentNumberMatches;
+            try
+            {
+                documentNumberMatches = IdentityDocumentStorage.VerifyDocumentNumber(
+                    DocumentNumber, identityVerification.DocumentNumberHash);
+            }
+            catch (InvalidOperationException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Identity document HMAC configuration error: " + ex);
+                ModelState.AddModelError("", "Không thể kiểm tra số giấy tờ do cấu hình bảo mật chưa hợp lệ.");
+                return View();
+            }
+            if (!documentNumberMatches)
+            {
+                ModelState.AddModelError("DocumentNumber", "Số giấy tờ không khớp với hồ sơ đăng ký đã được duyệt.");
+                return View();
+            }
+            if (!documentConsent)
+            {
+                ModelState.AddModelError("", "Bạn cần đồng ý cho ADMIN/MOD đối chiếu ảnh tải lên với ảnh giấy tờ gốc.");
+                return View();
+            }
+            if (frontDocument == null || frontDocument.ContentLength <= 0)
+            {
+                ModelState.AddModelError("", "Vui lòng tải ảnh mặt trước hoặc trang thông tin hộ chiếu lên.");
+                return View();
+            }
+            if (DocumentType == "CCCD" && (backDocument == null || backDocument.ContentLength <= 0))
+            {
+                ModelState.AddModelError("", "CCCD cần ảnh cả mặt trước và mặt sau.");
+                return View();
+            }
 
-            return RedirectToAction("ConfirmResetOtp");
+            PasswordResetVerification existing;
+            try
+            {
+                existing = db.PasswordResetVerifications
+                    .SingleOrDefault(x => x.UserId == user.UserId);
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                System.Diagnostics.Trace.TraceError("PasswordResetVerification table is missing: " + ex);
+                ModelState.AddModelError("", "Chức năng khôi phục chưa được cài đặt trong cơ sở dữ liệu. " +
+                    "Hãy chạy SQL/2026-11-03_tao_bang_passwordresetverification.sql trên DBNoiThat.");
+                return View();
+            }
+
+            if (existing != null && existing.Status == "Pending" &&
+                !string.IsNullOrWhiteSpace(existing.FrontFileName))
+            {
+                Session["ResetVerificationId"] = existing.PasswordResetVerificationId;
+                Session["Reset_Email"] = user.Email;
+                return RedirectToAction("ForgotPassword");
+            }
+
+            string oldFrontFileName = existing == null ? null : existing.FrontFileName;
+            string oldBackFileName = existing == null ? null : existing.BackFileName;
+            string newFrontFileName = null;
+            string newBackFileName = null;
+            try
+            {
+                newFrontFileName = IdentityDocumentStorage.Save(frontDocument);
+                if (DocumentType == "CCCD")
+                {
+                    newBackFileName = IdentityDocumentStorage.Save(backDocument);
+                }
+
+                if (existing == null)
+                {
+                    existing = new PasswordResetVerification { UserId = user.UserId };
+                    db.PasswordResetVerifications.Add(existing);
+                }
+
+                existing.DocumentNumberHash = identityVerification.DocumentNumberHash;
+                existing.DocumentType = DocumentType;
+                existing.FrontFileName = newFrontFileName;
+                existing.BackFileName = newBackFileName;
+                existing.Status = "Pending";
+                existing.ReviewNote = null;
+                existing.SubmittedAt = DateTime.Now;
+                existing.ReviewedAt = null;
+                existing.ReviewedByUserId = null;
+                existing.ResetOtpHash = null;
+                existing.ResetOtpExpiresAt = null;
+                db.SaveChanges();
+            }
+            catch (InvalidDataException ex)
+            {
+                IdentityDocumentStorage.Delete(newFrontFileName);
+                IdentityDocumentStorage.Delete(newBackFileName);
+                ModelState.AddModelError("", ex.Message);
+                return View();
+            }
+            catch
+            {
+                IdentityDocumentStorage.Delete(newFrontFileName);
+                IdentityDocumentStorage.Delete(newBackFileName);
+                throw;
+            }
+
+            try
+            {
+                IdentityDocumentStorage.Delete(oldFrontFileName);
+                IdentityDocumentStorage.Delete(oldBackFileName);
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Could not delete replaced password-reset documents: " + ex);
+                TempData["Warning"] = "Không xóa được ảnh giấy tờ khôi phục cũ. Quản trị viên cần kiểm tra App_Data/IdentityDocuments.";
+            }
+            catch (InvalidDataException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Could not delete replaced password-reset documents: " + ex);
+                TempData["Warning"] = "Có ảnh giấy tờ khôi phục cũ không hợp lệ cần được kiểm tra.";
+            }
+
+            try
+            {
+                IdentityDocumentStorage.DeleteResetOtp(existing.PasswordResetVerificationId);
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Could not delete stale reset OTP: " + ex);
+                TempData["Warning"] = "Không xóa được OTP cũ; OTP cũ không còn hiệu lực trong hệ thống.";
+            }
+            Session["ResetVerificationId"] = existing.PasswordResetVerificationId;
+            Session["Reset_Email"] = user.Email;
+            return RedirectToAction("ForgotPassword");
         }
 
         [HttpGet]
         public ActionResult ConfirmResetOtp()
         {
-            if (Session["Reset_Email"] == null) 
+            int? verificationId = Session["ResetVerificationId"] as int?;
+            if (!verificationId.HasValue)
             {
                 return RedirectToAction("ForgotPassword");
             }
-            ViewBag.Email = Session["Reset_Email"].ToString();
+
+            var verification = db.PasswordResetVerifications.Find(verificationId.Value);
+            if (verification == null)
+            {
+                Session.Remove("ResetVerificationId");
+                Session.Remove("Reset_Email");
+                return RedirectToAction("ForgotPassword");
+            }
+
+            PopulateResetOtpView(verification);
             return View();
         }
 
@@ -427,21 +700,46 @@ namespace WebsiteNoiThat.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ConfirmResetOtp(string otpInput, string newPassword, string confirmPassword)
         {
-            string sessionOtp = Session["Reset_OTP"] as string;
-            string email = Session["Reset_Email"] as string;
-            DateTime? expireTime = Session["Reset_ExpireTime"] as DateTime?;
-
-            ViewBag.Email = email;
-
-            // Kiểm tra hết hạn Session / OTP
-            if (expireTime == null || DateTime.Now > expireTime)
+            int? verificationId = Session["ResetVerificationId"] as int?;
+            if (!verificationId.HasValue)
             {
-                ModelState.AddModelError("", "Mã OTP đã hết hạn! Vui lòng yêu cầu lại mã mới.");
+                return RedirectToAction("ForgotPassword");
+            }
+
+            var verification = db.PasswordResetVerifications.Find(verificationId.Value);
+            if (verification == null)
+            {
+                Session.Remove("ResetVerificationId");
+                Session.Remove("Reset_Email");
+                return RedirectToAction("ForgotPassword");
+            }
+            PopulateResetOtpView(verification);
+
+            if (verification.Status != "Approved" ||
+                !verification.ResetOtpExpiresAt.HasValue ||
+                DateTime.Now > verification.ResetOtpExpiresAt.Value ||
+                string.IsNullOrWhiteSpace(verification.ResetOtpHash))
+            {
+                ModelState.AddModelError("", verification.Status == "Pending"
+                    ? "Yêu cầu đang chờ ADMIN/MOD xác minh giấy tờ."
+                    : "Mã OTP chưa được cấp hoặc đã hết hạn. Vui lòng gửi yêu cầu xác minh mới.");
                 return View();
             }
 
-            // Kiểm tra đúng mã OTP
-            if (string.IsNullOrWhiteSpace(otpInput) || sessionOtp != otpInput.Trim())
+            bool otpMatches;
+            try
+            {
+                otpMatches = IdentityDocumentStorage.VerifyDocumentNumber(
+                    otpInput == null ? null : "OTP" + otpInput.Trim(),
+                    verification.ResetOtpHash);
+            }
+            catch (InvalidOperationException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Identity document HMAC configuration error: " + ex);
+                ModelState.AddModelError("", "Không thể kiểm tra mã OTP do cấu hình bảo mật chưa hợp lệ.");
+                return View();
+            }
+            if (!otpMatches)
             {
                 ModelState.AddModelError("", "Mã OTP không chính xác!");
                 return View();
@@ -461,17 +759,23 @@ namespace WebsiteNoiThat.Controllers
                 return View();
             }
 
-            var user = db.Users.FirstOrDefault(x => x.Email == email);
+            var user = db.Users.Find(verification.UserId);
             if (user != null)
             {
                 // FIX BUG: PHẢI DÙNG MD5 HASH ĐỂ ĐỒNG BỘ VỚI HÀM LOGIN
                 user.Password = Encryptor.MD5Hash(newPassword);
                 db.SaveChanges();
 
-                // Xóa sạch Session sau khi hoàn thành
-                Session.Remove("Reset_OTP");
+                verification.Status = "Completed";
+                verification.ResetOtpHash = null;
+                verification.ResetOtpExpiresAt = null;
+                db.SaveChanges();
+                IdentityDocumentStorage.DeleteResetOtp(verification.PasswordResetVerificationId);
+
+                Session.Remove("ResetVerificationId");
                 Session.Remove("Reset_Email");
-                Session.Remove("Reset_ExpireTime");
+                Session.Remove("DemoOtp");
+                Session.Remove("DemoOtpExpireTime");
 
                 TempData["Success"] = "Đổi mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.";
                 return RedirectToAction("Login");
@@ -480,6 +784,40 @@ namespace WebsiteNoiThat.Controllers
             ModelState.AddModelError("", "Không tìm thấy tài khoản để cập nhật!");
             return View();
         }
+
+        private void PopulateResetOtpView(PasswordResetVerification verification)
+        {
+            ViewBag.Email = Session["Reset_Email"];
+            ViewBag.ResetVerificationStatus = verification.Status;
+            ViewBag.ResetVerificationNote = verification.ReviewNote;
+
+            bool otpExpired = !verification.ResetOtpExpiresAt.HasValue ||
+                DateTime.Now > verification.ResetOtpExpiresAt.Value ||
+                string.IsNullOrWhiteSpace(verification.ResetOtpHash);
+            ViewBag.ResetOtpExpired = otpExpired;
+            if (otpExpired)
+            {
+                IdentityDocumentStorage.DeleteResetOtp(verification.PasswordResetVerificationId);
+                return;
+            }
+
+            try
+            {
+                ViewBag.ResetOtpForCustomer =
+                    IdentityDocumentStorage.ReadResetOtp(verification.PasswordResetVerificationId);
+            }
+            catch (IOException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Could not read protected reset OTP: " + ex);
+                ModelState.AddModelError("", "Không thể đọc OTP đã bảo vệ. Vui lòng liên hệ quản trị viên.");
+            }
+            catch (CryptographicException ex)
+            {
+                System.Diagnostics.Trace.TraceError("Could not unprotect stored reset OTP: " + ex);
+                ModelState.AddModelError("", "Không thể giải mã OTP đã bảo vệ. Vui lòng liên hệ quản trị viên.");
+            }
+        }
+
         // ==================== 5. THÔNG TIN NGƯỜI DÙNG ====================
         [HttpGet]
         public ActionResult ViewCurentUser()
@@ -726,6 +1064,19 @@ namespace WebsiteNoiThat.Controllers
             {
                 // Chat la kenh phu: loi ghi chat khong duoc lam treo luong OTP chinh
             }
+        }
+
+        private void StoreDemoOtpOnHome(string otp, DateTime expireTime)
+        {
+            if (MailHelper.LastSentViaDevFallback)
+            {
+                Session["DemoOtp"] = otp;
+                Session["DemoOtpExpireTime"] = expireTime;
+                return;
+            }
+
+            Session.Remove("DemoOtp");
+            Session.Remove("DemoOtpExpireTime");
         }
     }
 }

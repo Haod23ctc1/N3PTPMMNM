@@ -1,5 +1,6 @@
 using Models.EF;
 using System;
+using System.Data.Entity.Infrastructure;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -104,18 +105,47 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
 
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [HasCredential(RoleId = "DELETE_ADMIN")]
-        public ActionResult Delete(FormCollection formCollection)
+        public ActionResult Delete(int? UserId)
         {
-            string[] ids = formCollection["UserId"].Split(new char[] { ',' });
-
-            foreach (string id in ids)
+            if (!UserId.HasValue)
             {
-                var model = db.Users.Find(Convert.ToInt32(id));
-                db.Users.Remove(model);
+                TempData["Error"] = "Không tìm thấy tài khoản cần xóa.";
+                return RedirectToAction("Show");
+            }
+
+            var session = Session[Commoncontent.user_sesion_admin] as UserLogin;
+            if (session != null && session.UserId == UserId.Value)
+            {
+                TempData["Error"] = "Không thể xóa tài khoản quản trị đang đăng nhập.";
+                return RedirectToAction("Show");
+            }
+
+            var model = db.Users.Find(UserId.Value);
+            if (model == null)
+            {
+                TempData["Error"] = "Tài khoản không tồn tại hoặc đã được xóa.";
+                return RedirectToAction("Show");
+            }
+
+            if (model.GroupId == CommonConstant.ADMIN_GROUP &&
+                db.Users.Count(user => user.GroupId == CommonConstant.ADMIN_GROUP && user.Status) <= 1)
+            {
+                TempData["Error"] = "Không thể xóa quản trị viên ADMIN đang hoạt động cuối cùng.";
+                return RedirectToAction("Show");
+            }
+
+            db.Users.Remove(model);
+            try
+            {
                 db.SaveChanges();
-
-
+                TempData["Success"] = "Đã xóa tài khoản.";
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] = "Tài khoản đang được dữ liệu khác sử dụng nên không thể xóa hẳn. " +
+                    "Hãy vào Sửa và tắt trạng thái tài khoản để vô hiệu hóa.";
             }
             return RedirectToAction("Show");
         }
