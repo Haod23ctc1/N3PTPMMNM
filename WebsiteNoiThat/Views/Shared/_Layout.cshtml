@@ -19,7 +19,7 @@
     <link href="~/Content/css/nivo-slider.css" rel="stylesheet" />
     <link href="~/Content/css/owl.carousel.css" rel="stylesheet" />
     <link href="~/Content/css/owl.theme.css" rel="stylesheet" />
-    <link href="~/Content/css/style.css" rel="stylesheet" />
+    <link href="~/Content/css/style.css?v=9" rel="stylesheet" />
 <link href="~/Content/css/smooth.css?v=2" rel="stylesheet" />
     @*<link href="~/Content/css/bootstrap.min.css" rel="stylesheet" />*@
 
@@ -64,9 +64,9 @@
                 </div>
                 @*account, cart*@
                 <div id="account_cart">
-                    <button id="btn_account">
+                    <div id="btn_account">
                         @{ Html.RenderAction("ViewLogin", "RegisterAndLogin");}
-                    </button>
+                    </div>
                     <button id="btn_cart">
                         <a href="/gio-hang">
                             <img src="~/Content/client/assets/img/shopping.png" />@{ Html.RenderAction("HeaderCart", "Home");}
@@ -339,10 +339,7 @@
 
         }
     </script>
-<<<<<<< HEAD
-=======
     <script src="~/Scripts/smooth.js"></script>
->>>>>>> main
     <script src="~/Scripts/password-toggle.js"></script>
     @RenderSection("jsFooter", required: false)
 </body>

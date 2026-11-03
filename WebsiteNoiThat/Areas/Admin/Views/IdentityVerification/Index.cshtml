@@ -1,0 +1,45 @@
+@model IEnumerable<Models.EF.IdentityVerification>
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Hồ sơ xác minh danh tính</h2>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning">@TempData["Warning"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Mã hồ sơ</th>
+                <th>Khách hàng</th>
+                <th>Email</th>
+                <th>Loại giấy tờ</th>
+                <th>Ngày gửi</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.IdentityVerificationId</td>
+                    <td>@(item.User == null ? item.UserId.ToString() : item.User.Name)</td>
+                    <td>@(item.User == null ? "" : item.User.Email)</td>
+                    <td>@item.DocumentType</td>
+                    <td>@item.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><a class="btn btn-primary btn-sm" href="@Url.Action("Details", new { id = item.IdentityVerificationId })">Kiểm tra</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

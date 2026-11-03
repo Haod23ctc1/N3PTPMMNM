@@ -1,6 +1,7 @@
 @{
     ViewBag.Title = "Xác nhận OTP & Đổi mật khẩu";
     Layout = null;
+    string resetVerificationStatus = ViewBag.ResetVerificationStatus as string;
 }
 
 <!DOCTYPE html>
@@ -166,15 +167,36 @@
             background: linear-gradient(180deg, #17a673 0%, #13855c 100%);
         }
 
-        .alert-danger {
-            background-color: #fff5f5;
-            color: #c53030;
-            border: 1px solid #feb2b2;
+        .alert {
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 13.5px;
             margin-bottom: 16px;
             text-align: center;
+        }
+
+        .alert-danger {
+            background-color: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .alert-success {
+            background-color: #f0fff4;
+            color: #276749;
+            border: 1px solid #9ae6b2;
+        }
+
+        .alert-info {
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            border: 1px solid #90cdf4;
+        }
+
+        .alert-warning {
+            background-color: #fffbeb;
+            color: #975a16;
+            border: 1px solid #f6e05e;
         }
 
         .links-group {
@@ -213,61 +235,128 @@
         <!-- Cột đồ họa -->
         <div class="left-banner">
             <div class="icon-circle">📩</div>
-            <h3>Kiểm tra Email</h3>
-            <p>Mã OTP đã được gửi đến email:<br /><b style="color: #4e73df; word-break: break-all;">@ViewBag.Email</b></p>
-            <p style="margin-top: 10px; font-size: 12px; color: #a0aec0;">Mã có hiệu lực trong 5 phút.</p>
-            <p style="margin-top: 10px; font-size: 13px;">
-                <a href="/Chat" style="color: #4e73df; text-decoration: underline;">
-                    <b>📩 Không nhận được email?</b> Xem mã OTP trong mục Tin nhắn
-                </a>
-                <br /><span style="font-size: 11px; color: #a0aec0;">(tra cứu bằng Email + Số điện thoại)</span>
-            </p>
+            @if (resetVerificationStatus == "Pending")
+            {
+                <h3>Đang xác minh giấy tờ</h3>
+                <p>Yêu cầu khôi phục đang chờ ADMIN/MOD đối chiếu ảnh.</p>
+            }
+            else if (resetVerificationStatus == "Approved")
+            {
+                if (ViewBag.ResetOtpForCustomer != null)
+                {
+                    <h3>OTP khôi phục</h3>
+                    <p>Giấy tờ đã khớp hồ sơ được duyệt. Lấy mã OTP hiển thị bên phải để tiếp tục.</p>
+                }
+                else
+                {
+                    <h3>Kiểm tra Email</h3>
+                    <p>OTP đã được gửi đến email:<br /><b style="color: #4e73df; word-break: break-all;">@ViewBag.Email</b></p>
+                }
+                <p style="margin-top: 10px; font-size: 12px; color: #a0aec0;">Mã có hiệu lực trong 5 phút sau khi được gửi.</p>
+                if (ViewBag.ResetOtpExpired != true && ViewBag.ResetOtpForCustomer == null)
+                {
+                    <p style="margin-top: 10px; font-size: 13px;">
+                        <a href="/Chat" style="color: #4e73df; text-decoration: underline;">
+                            <b>📩 Không nhận được email?</b> Xem mã OTP trong mục Tin nhắn
+                        </a>
+                        <br /><span style="font-size: 11px; color: #a0aec0;">(tra cứu bằng Email + Số điện thoại)</span>
+                    </p>
+                }
+            }
+            else
+            {
+                <h3>Trạng thái yêu cầu</h3>
+                <p>Xem kết quả xác minh trên thông báo bên phải.</p>
+            }
         </div>
 
         <!-- Cột form nhập -->
         <div class="right-form">
             <h2 class="form-title">Đặt lại mật khẩu</h2>
-            <p class="form-desc">Nhập mã OTP 6 số và mật khẩu mới của bạn</p>
+            <p class="form-desc">Tài khoản: @ViewBag.Email</p>
 
-            @if (!ViewData.ModelState.IsValid)
+            @if (ViewBag.ResetOtpForCustomer != null)
             {
-                <div class="alert-danger">
-                    @Html.ValidationSummary(true, "")
+                <div class="alert alert-warning text-center">
+                    Giấy tờ đã khớp với hồ sơ được ADMIN/MOD duyệt. Mã OTP của bạn có hiệu lực trong 5 phút:
+                    <br /><strong style="font-size: 28px; letter-spacing: 6px;">@ViewBag.ResetOtpForCustomer</strong>
                 </div>
             }
-
-            @using (Html.BeginForm("ConfirmResetOtp", "RegisterAndLogin", FormMethod.Post))
+            @if (TempData["Warning"] != null)
             {
-                @Html.AntiForgeryToken()
-
-                <div class="input-group">
-                    <label for="otpInput">Mã xác thực OTP (6 chữ số):</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="otpInput" name="otpInput" class="input-control" placeholder="Ví dụ: 123456" maxlength="6" required autofocus style="letter-spacing: 4px; font-weight: bold;" />
-                    </div>
+                <div class="alert alert-warning">@TempData["Warning"]</div>
+            }
+            @if (resetVerificationStatus == "Pending")
+            {
+                <div class="alert alert-info">
+                    Ảnh đang chờ ADMIN/MOD đối chiếu với ảnh gốc trong hồ sơ đăng ký. OTP chưa được gửi; vui lòng quay lại trang này sau khi có kết quả.
+                    <br /><a href="@Url.Action("ForgotPassword", "RegisterAndLogin")">Quay lại trang quên mật khẩu</a>
                 </div>
-
-                <div class="input-group">
-                    <label for="newPassword">Mật khẩu mới (tối thiểu 6 ký tự):</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="newPassword" name="newPassword" class="input-control" placeholder="Nhập mật khẩu mới" minlength="6" required />
-                        <button type="button" class="btn-toggle-eye" onclick="togglePass('newPassword', this)">
-                            <span class="glyphicon glyphicon-eye-open"></span>
-                        </button>
-                    </div>
+            }
+            @if (resetVerificationStatus == "Rejected")
+            {
+                <div class="alert alert-danger">
+                    Giấy tờ chưa được chấp nhận. Ghi chú: @(ViewBag.ResetVerificationNote ?? "Vui lòng gửi lại hồ sơ.")
+                    <br /><a href="@Url.Action("ForgotPassword", "RegisterAndLogin")">Gửi lại giấy tờ xác minh</a>
                 </div>
-
-                <div class="input-group">
-                    <label for="confirmPassword">Xác nhận lại mật khẩu mới:</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Gõ lại mật khẩu mới" minlength="6" required />
-                        <button type="button" class="btn-toggle-eye" onclick="togglePass('confirmPassword', this)">
-                            <span class="glyphicon glyphicon-eye-open"></span>
-                        </button>
-                    </div>
+            }
+            @if (resetVerificationStatus == "Completed")
+            {
+                <div class="alert alert-success">Yêu cầu đặt lại mật khẩu này đã hoàn tất.</div>
+            }
+            @if (resetVerificationStatus == "Approved" && ViewBag.ResetOtpExpired == true)
+            {
+                <div class="alert alert-danger">
+                    Mã OTP chưa được gửi hoặc đã hết hạn. Hãy yêu cầu mã mới.
+                    <br /><a href="@Url.Action("ForgotPassword", "RegisterAndLogin")">Yêu cầu OTP mới</a>
                 </div>
+            }
+            @if (resetVerificationStatus == "Approved" && ViewBag.ResetOtpExpired != true)
+            {
+                <p class="form-desc">
+                    @if (ViewBag.ResetOtpForCustomer != null)
+                    {
+                        @:Nhập mã OTP hiển thị phía trên và mật khẩu mới.
+                    }
+                    else
+                    {
+                        @:Nhập mã OTP trong email và mật khẩu mới.
+                    }
+                </p>
+                <form method="post" action="@Url.Action("ConfirmResetOtp", "RegisterAndLogin")">
+                    @Html.AntiForgeryToken()
+                    <div class="alert-danger">
+                        @Html.ValidationSummary(true, "")
+                    </div>
 
-                <button type="submit" class="btn-submit">Xác nhận đổi mật khẩu</button>
+                    <div class="input-group">
+                        <label for="otpInput">Mã xác thực OTP (6 chữ số):</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="otpInput" name="otpInput" class="input-control" placeholder="Ví dụ: 123456" maxlength="6" required autofocus style="letter-spacing: 4px; font-weight: bold;" />
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="newPassword">Mật khẩu mới (tối thiểu 6 ký tự):</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="newPassword" name="newPassword" class="input-control" placeholder="Nhập mật khẩu mới" minlength="6" required />
+                            <button type="button" class="btn-toggle-eye" onclick="togglePass('newPassword', this)">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="confirmPassword">Xác nhận lại mật khẩu mới:</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Gõ lại mật khẩu mới" minlength="6" required />
+                            <button type="button" class="btn-toggle-eye" onclick="togglePass('confirmPassword', this)">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Xác nhận đổi mật khẩu</button>
+                </form>
             }
 
             <div class="links-group">

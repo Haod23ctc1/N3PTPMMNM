@@ -65,6 +65,14 @@ namespace WebsiteNoiThat.Common
         /// </summary>
         public static bool SendMail(string toEmailAddress, string subject, string content)
         {
+            bool usedFallback;
+            return SendMail(toEmailAddress, subject, content, out usedFallback);
+        }
+
+        public static bool SendMail(string toEmailAddress, string subject, string content,
+            out bool usedFallback)
+        {
+        usedFallback = false;
         try
         {
             // reset cờ trước mỗi lần gửi thật
@@ -146,10 +154,9 @@ namespace WebsiteNoiThat.Common
             {
                 try
                 {
-                    // Đánh dấu: mail này đi qua kênh dự phòng (SMTP không gửi được) ->
-                    // controller đọc cờ này để hiện luôn mã OTP trên trang xác thực (dev)
-                    LastSentViaDevFallback = true;
                     SaveMailToFile(toEmailAddress, subject, content);
+                    LastSentViaDevFallback = true;
+                    usedFallback = true;
                     return true; // Đã "gửi" qua kênh file trong môi trường dev
                 }
                 catch (Exception fileEx)

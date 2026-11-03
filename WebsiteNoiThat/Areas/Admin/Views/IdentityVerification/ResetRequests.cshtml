@@ -1,0 +1,47 @@
+@model IEnumerable<Models.EF.PasswordResetVerification>
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Yêu cầu xác minh giấy tờ để đặt lại mật khẩu</h2>
+<p class="text-info">So sánh ảnh khách gửi với ảnh giấy tờ gốc trong hồ sơ đăng ký. OTP chỉ được gửi sau khi admin duyệt yêu cầu.</p>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning">@TempData["Warning"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Mã yêu cầu</th>
+                <th>Tên đăng nhập</th>
+                <th>Email</th>
+                <th>Loại giấy tờ</th>
+                <th>Ngày gửi</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.PasswordResetVerificationId</td>
+                    <td>@(item.User == null ? item.UserId.ToString() : item.User.Username)</td>
+                    <td>@(item.User == null ? "" : item.User.Email)</td>
+                    <td>@item.DocumentType</td>
+                    <td>@item.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><a class="btn btn-primary btn-sm" href="@Url.Action("ResetDetails", new { id = item.PasswordResetVerificationId })">Kiểm tra</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p><a href="@Url.Action("Index")">Hồ sơ xác minh đăng ký</a></p>

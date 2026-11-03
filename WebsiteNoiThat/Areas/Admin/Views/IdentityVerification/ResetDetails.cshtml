@@ -1,0 +1,86 @@
+@model Models.EF.PasswordResetVerification
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var user = Model.User;
+    var identity = ViewBag.IdentityVerification as Models.EF.IdentityVerification;
+}
+
+<h2>Kiểm tra giấy tờ đặt lại mật khẩu #@Model.PasswordResetVerificationId</h2>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+<dl class="dl-horizontal">
+    <dt>Tài khoản</dt>
+    <dd>@(user == null ? Model.UserId.ToString() : user.Username)</dd>
+    <dt>Họ tên</dt>
+    <dd>@(user == null ? "" : user.Name)</dd>
+    <dt>Email nhận OTP</dt>
+    <dd>@(user == null ? "" : user.Email)</dd>
+    <dt>Loại giấy tờ</dt>
+    <dd>@Model.DocumentType</dd>
+    <dt>Ngày gửi</dt>
+    <dd>@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+</dl>
+<p>So sánh trực quan ảnh gửi khi khôi phục với ảnh gốc đã được duyệt. Đọc số trên ảnh gửi lại và nhập bên dưới; hệ thống sẽ đối chiếu số đó với mã HMAC đã lưu. Khi duyệt, OTP được gửi qua email (nếu gửi thành công), đồng thời hiển thị trên trang quên mật khẩu của khách trong 5 phút; ảnh gửi lại sẽ bị xóa. Đây là kiểm tra thủ công, không phải nhận diện ảnh tự động.</p>
+@if (identity == null || string.IsNullOrWhiteSpace(identity.FrontFileName))
+{
+    <div class="alert alert-danger">Không còn ảnh gốc trong hồ sơ đăng ký để so sánh. Không thể duyệt yêu cầu này.</div>
+}
+else if (string.IsNullOrWhiteSpace(Model.FrontFileName) ||
+    (Model.DocumentType == "CCCD" && string.IsNullOrWhiteSpace(Model.BackFileName)))
+{
+    <div class="alert alert-danger">Yêu cầu thiếu ảnh giấy tờ cần thiết. Không thể duyệt.</div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Ảnh gốc đăng ký - mặt trước / trang thông tin</h4>
+            <img src="@Url.Action("Document", new { id = identity.IdentityVerificationId, side = "front" })" alt="Ảnh gốc mặt trước giấy tờ" class="img-responsive img-thumbnail" />
+        </div>
+        <div class="col-md-6">
+            <h4>Ảnh gửi lại - mặt trước / trang thông tin</h4>
+            <img src="@Url.Action("ResetDocument", new { id = Model.PasswordResetVerificationId, side = "front" })" alt="Ảnh gửi lại mặt trước giấy tờ" class="img-responsive img-thumbnail" />
+        </div>
+        @if (!string.IsNullOrWhiteSpace(identity.BackFileName) || !string.IsNullOrWhiteSpace(Model.BackFileName))
+        {
+            <div class="col-md-6">
+                <h4>Ảnh gốc đăng ký - mặt sau</h4>
+                @if (!string.IsNullOrWhiteSpace(identity.BackFileName))
+                {
+                    <img src="@Url.Action("Document", new { id = identity.IdentityVerificationId, side = "back" })" alt="Ảnh gốc mặt sau giấy tờ" class="img-responsive img-thumbnail" />
+                }
+                else
+                {
+                    <p class="text-warning">Không có ảnh mặt sau trong hồ sơ gốc.</p>
+                }
+            </div>
+            <div class="col-md-6">
+                <h4>Ảnh gửi lại - mặt sau</h4>
+                @if (!string.IsNullOrWhiteSpace(Model.BackFileName))
+                {
+                    <img src="@Url.Action("ResetDocument", new { id = Model.PasswordResetVerificationId, side = "back" })" alt="Ảnh gửi lại mặt sau giấy tờ" class="img-responsive img-thumbnail" />
+                }
+                else
+                {
+                    <p class="text-warning">Không có ảnh mặt sau gửi lại.</p>
+                }
+            </div>
+        }
+    </div>
+}
+<hr />
+<form method="post" action="@Url.Action("ApproveReset")" style="display:inline-block">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.PasswordResetVerificationId" />
+    <input type="text" name="documentNumber" maxlength="20" required class="form-control" placeholder="Số đọc trên ảnh" style="display:inline-block; width:220px" />
+    <button type="submit" class="btn btn-success" @(identity == null || string.IsNullOrWhiteSpace(identity.FrontFileName) || string.IsNullOrWhiteSpace(Model.FrontFileName) || (Model.DocumentType == "CCCD" && string.IsNullOrWhiteSpace(Model.BackFileName)) ? "disabled=\"disabled\"" : "")>Đối chiếu và duyệt, cấp OTP</button>
+</form>
+<form method="post" action="@Url.Action("RejectReset")" style="display:inline-block; margin-left:12px">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.PasswordResetVerificationId" />
+    <input type="text" name="reviewNote" maxlength="500" required class="form-control" placeholder="Lý do từ chối" style="display:inline-block; width:240px" />
+    <button type="submit" class="btn btn-danger">Từ chối</button>
+</form>
+<p style="margin-top:20px"><a href="@Url.Action("ResetRequests")">Quay lại yêu cầu đặt lại mật khẩu</a></p>

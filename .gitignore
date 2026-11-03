@@ -54,6 +54,9 @@ WebsiteNoiThat/Web.config
 WebsiteNoiThat/secrets.config
 .env
 
+# Dữ liệu riêng tư runtime (ảnh giấy tờ, email OTP dự phòng)
+WebsiteNoiThat/App_Data/*
+
 # Các file hệ thống khác
 ~$*
 *~

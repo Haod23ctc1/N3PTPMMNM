@@ -162,6 +162,7 @@
     <Compile Include="Areas\Admin\Controllers\CredentialsController.cs" />
     <Compile Include="Areas\Admin\Controllers\CustomerController.cs" />
     <Compile Include="Areas\Admin\Controllers\HomeController.cs" />
+    <Compile Include="Areas\Admin\Controllers\IdentityVerificationController.cs" />
     <Compile Include="Areas\Admin\Controllers\LoginController.cs" />
     <Compile Include="Areas\Admin\Controllers\NewssController.cs" />
     <Compile Include="Areas\Admin\Controllers\OrderController.cs" />
@@ -178,6 +179,7 @@
     <Compile Include="Common\Commoncontent.cs" />
     <Compile Include="Common\Encryptor.cs" />
     <Compile Include="Common\HasCredentialAttribute.cs" />
+    <Compile Include="Common\IdentityDocumentStorage.cs" />
     <Compile Include="Common\MailHelper.cs" />
     <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\CategoryProductController.cs" />
@@ -185,6 +187,7 @@
     <Compile Include="Controllers\ContactController.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\IdentityVerificationController.cs" />
     <Compile Include="Controllers\NewsController.cs" />
     <Compile Include="Controllers\OrderController.cs" />
     <Compile Include="Controllers\ProductController.cs" />
@@ -2620,6 +2623,10 @@
     <Content Include="botdetect.xml" />
     <Content Include="Areas\Admin\Views\web.config" />
     <Content Include="Areas\Admin\Views\Shared\_Layout.cshtml" />
+    <Content Include="Areas\Admin\Views\IdentityVerification\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\IdentityVerification\Details.cshtml" />
+    <Content Include="Areas\Admin\Views\IdentityVerification\ResetRequests.cshtml" />
+    <Content Include="Areas\Admin\Views\IdentityVerification\ResetDetails.cshtml" />
     <Content Include="Areas\Admin\Themes\less\mixins.less" />
     <Content Include="Areas\Admin\Themes\less\sb-admin-2.less" />
     <Content Include="Areas\Admin\Themes\less\variables.less" />
@@ -3119,6 +3126,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\IdentityVerification\Submit.cshtml" />
     <Content Include="Views\Home\PaymentPolicy.cshtml" />
     <Content Include="Views\Home\Rules.cshtml" />
     <Content Include="Views\Home\ShippingPolicy.cshtml" />
