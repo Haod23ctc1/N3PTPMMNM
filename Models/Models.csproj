@@ -56,6 +56,7 @@
     <Compile Include="Common\DateGreaterThanAttribute.cs" />
     <Compile Include="CredentialViewModel.cs" />
     <Compile Include="DAO\CategoryDao.cs" />
+    <Compile Include="DAO\ChatMessageDao.cs" />
     <Compile Include="DAO\FeedbackDao.cs" />
     <Compile Include="DAO\NewsDao.cs" />
     <Compile Include="DAO\OrderDao.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="DAO\UserDao.cs" />
     <Compile Include="EF\Card.cs" />
     <Compile Include="EF\Category.cs" />
+    <Compile Include="EF\ChatMessage.cs" />
     <Compile Include="EF\Contact.cs" />
     <Compile Include="EF\Credential.cs" />
     <Compile Include="EF\DBNoiThat.cs" />

@@ -179,6 +179,7 @@
     <Compile Include="Common\MailHelper.cs" />
     <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\CategoryProductController.cs" />
+    <Compile Include="Controllers\ChatController.cs" />
     <Compile Include="Controllers\ContactController.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -3129,6 +3130,7 @@
     <Content Include="Views\Product\CategoryShow.cshtml" />
     <Content Include="Views\Product\Search.cshtml" />
     <Content Include="Views\RegisterAndLogin\Register.cshtml" />
+    <Content Include="Views\Chat\Index.cshtml" />
     <Content Include="Views\Contact\Lookup.cshtml" />
     <Content Include="Views\Contact\Contacts.cshtml" />
     <Content Include="Views\RegisterAndLogin\Login.cshtml" />
