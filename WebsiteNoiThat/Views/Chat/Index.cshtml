@@ -10,6 +10,10 @@
             <h2 style="color: #4e73df; border-bottom: 2px solid #4e73df; padding-bottom: 8px;">
                 <i class="fa fa-comments-o"></i> Tin nhắn &amp; Hỗ trợ
             </h2>
+            @if (ViewBag.ChatError != null)
+            {
+                <div class="alert alert-danger">@ViewBag.ChatError</div>
+            }
 
             @if (!(bool)ViewBag.Identified)
             {
@@ -111,4 +115,3 @@
         if (box) { box.scrollTop = box.scrollHeight; }
     })();
 </script>
-

@@ -6,6 +6,14 @@
 }
 <h2>Danh sách khách hàng</h2>
 <hr />
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
 <p>
     <a href="@Url.Action("Add", "Customer")" class="btn btn-primary" style="margin-top:10px;margin-bottom:10px;">Thêm khách hàng</a>
 </p>
@@ -16,7 +24,8 @@
             <table id="example" class="table table-striped table-bordered table-hover" style="width:100%">
                 <thead>
                     <tr>
-                        <th>Mã khách hàng</th>
+                        <th>STT hiển thị</th>
+                        <th>Mã user</th>
                         <th>Họ tên</th>
                         <th>Địa chỉ</th>
                         <th>Số điện thoại</th>
@@ -37,7 +46,8 @@
                     @foreach (var item in Model)
                     {
                         <tr class="Search">
-                            <td> @item.UserId</td>
+                            <td></td>
+                            <td>@item.UserId</td>
                             <td> @item.Name</td>
                             <td>@item.Address</td>
                             <td>@item.Phone</td>
@@ -48,9 +58,26 @@
                             <td>@item.Status</td>
                             <td>@item.NumberCard</td>
                             @*<td>@item.Indentification</td>*@
-                            <td width="120px;">
-                                <input type="button" class="btn btn-sm btn-primary" value="Sửa" onclick="location.href='/Admin/Customer/Edit?UserId=@item.UserId'" /> |
-                                <input type="button" class="btn btn-sm btn-danger" value="Xóa" onclick="location.href='/Admin/Customer/Delete?UserId=@item.UserId'" />
+                            <td width="220px;">
+                                <a class="btn btn-sm btn-primary" href="@Url.Action("Edit", "Customer", new { UserId = item.UserId })">Sửa</a>
+                                @using (Html.BeginForm("ToggleStatus", "Customer", FormMethod.Post, new { style = "display:inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("UserId", item.UserId)
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Bạn có chắc muốn @(item.Status ? "vô hiệu hóa" : "kích hoạt lại") tài khoản @item.Username?');">
+                                        @(item.Status ? "Vô hiệu hóa" : "Kích hoạt")
+                                    </button>
+                                }
+                                @using (Html.BeginForm("Delete", "Customer", FormMethod.Post, new { style = "display:inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("UserId", item.UserId)
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Xóa vĩnh viễn user ID @item.UserId? Nếu còn dữ liệu liên quan, hệ thống sẽ giữ nguyên và báo tên bảng.');">
+                                        Xóa
+                                    </button>
+                                }
                             </td>
 
 
@@ -69,8 +96,15 @@
 
         <script type="text/javascript">
 
-            $('#example').DataTable();
+            $('#example').DataTable({
+                columnDefs: [{
+                    targets: 0,
+                    searchable: false,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                }]
+            });
         </script>
         <script src="~/Scripts/jquery-3.3.1.min.js"></script>
-
-

@@ -12,6 +12,20 @@ namespace WebsiteNoiThat.Controllers
     {
         public ActionResult Index()
         {
+            string demoOtp = Session["DemoOtp"] as string;
+            DateTime? demoOtpExpireTime = Session["DemoOtpExpireTime"] as DateTime?;
+            if (!string.IsNullOrEmpty(demoOtp) &&
+                demoOtpExpireTime.HasValue &&
+                DateTime.Now <= demoOtpExpireTime.Value)
+            {
+                ViewBag.DemoOtp = demoOtp;
+            }
+            else
+            {
+                Session.Remove("DemoOtp");
+                Session.Remove("DemoOtpExpireTime");
+            }
+
             return View();
         }
 
