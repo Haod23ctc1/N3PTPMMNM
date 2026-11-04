@@ -337,9 +337,9 @@
                     </div>
 
                     <div class="input-group">
-                        <label for="newPassword">Mật khẩu mới (tối thiểu 6 ký tự):</label>
+                        <label for="newPassword">Mật khẩu mới (từ 8 đến 32 ký tự, gồm cả chữ và số):</label>
                         <div class="input-wrapper">
-                            <input type="password" id="newPassword" name="newPassword" class="input-control" placeholder="Nhập mật khẩu mới" minlength="6" required />
+                            <input type="password" id="newPassword" name="newPassword" class="input-control" placeholder="Nhập mật khẩu mới" minlength="8" maxlength="32" data-pw-strength="true" required />
                             <button type="button" class="btn-toggle-eye" onclick="togglePass('newPassword', this)">
                                 <span class="glyphicon glyphicon-eye-open"></span>
                             </button>
@@ -349,7 +349,7 @@
                     <div class="input-group">
                         <label for="confirmPassword">Xác nhận lại mật khẩu mới:</label>
                         <div class="input-wrapper">
-                            <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Gõ lại mật khẩu mới" minlength="6" required />
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Gõ lại mật khẩu mới" minlength="8" required />
                             <button type="button" class="btn-toggle-eye" onclick="togglePass('confirmPassword', this)">
                                 <span class="glyphicon glyphicon-eye-open"></span>
                             </button>
@@ -382,5 +382,8 @@
             }
         }
     </script>
+
+    <!-- Kiểm tra độ mạnh mật khẩu (issue #130) -->
+    <script src="~/Scripts/password-strength.js"></script>
 </body>
 </html>

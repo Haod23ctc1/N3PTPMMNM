@@ -168,10 +168,10 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                 return View();
             }
 
-            // Mật khẩu mới
-            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+            // Mật khẩu mới - kiểm tra độ mạnh theo chính sách chung (issue #130)
+            if (!PasswordPolicy.IsValid(newPassword))
             {
-                ModelState.AddModelError("", "Mật khẩu mới phải có tối thiểu 6 ký tự!");
+                ModelState.AddModelError("", PasswordPolicy.RuleMessage);
                 return View();
             }
             if (newPassword != confirmPassword)

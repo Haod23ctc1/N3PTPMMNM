@@ -98,7 +98,7 @@
 
                                             <div class="form-group">
                                                 <div class="password-field position-relative">
-                                                    @Html.PasswordFor(model => model.Password, new { @class = "form-control form-control-user", @placeholder = "Mật khẩu (từ 6 đến 32 ký tự)" })
+                                                    @Html.PasswordFor(model => model.Password, new { @class = "form-control form-control-user", @placeholder = "Mật khẩu (từ 8 đến 32 ký tự, gồm chữ và số)", maxlength = "32", data_pw_strength = "true" })
                                                     <button type="button" class="toggle-password" data-target="#Password" aria-label="Hiện mật khẩu">
                                                         <i class="fa fa-eye"></i>
                                                     </button>
@@ -202,6 +202,9 @@
 
     <!-- Thư viện Google reCAPTCHA (Hiển thị ngôn ngữ Tiếng Việt) -->
     <script src="https://www.google.com/recaptcha/api.js?hl=vi" async defer></script>
+
+    <!-- Kiểm tra độ mạnh mật khẩu (issue #130) -->
+    <script src="~/Scripts/password-strength.js"></script>
 
     <!-- Kiểm tra dữ liệu phía client + dịch thông báo sang tiếng Việt -->
     <script src="~/Scripts/jquery.validate.min.js"></script>

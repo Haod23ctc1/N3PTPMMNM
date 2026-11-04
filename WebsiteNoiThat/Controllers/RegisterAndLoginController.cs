@@ -158,6 +158,13 @@ namespace WebsiteNoiThat.Controllers
                 return View(model);
             }
 
+            // 2. Kiem tra do manh mat khau (issue #130)
+            if (!PasswordPolicy.IsValid(model.Password))
+            {
+                ModelState.AddModelError("Password", PasswordPolicy.RuleMessage);
+                return View(model);
+            }
+
             if (model.DocumentType != "CCCD" && model.DocumentType != "Passport")
             {
                 ModelState.AddModelError("DocumentType", "Vui lòng chọn CCCD hoặc hộ chiếu.");
@@ -745,10 +752,10 @@ namespace WebsiteNoiThat.Controllers
                 return View();
             }
 
-            // Kiểm tra độ dài mật khẩu mới
-            if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
+            // Kiểm tra độ mạnh mật khẩu mới (issue #130)
+            if (!PasswordPolicy.IsValid(newPassword))
             {
-                ModelState.AddModelError("", "Mật khẩu mới phải từ 6 ký tự trở lên!");
+                ModelState.AddModelError("", PasswordPolicy.RuleMessage);
                 return View();
             }
 
@@ -910,6 +917,13 @@ namespace WebsiteNoiThat.Controllers
             if (user == null)
             {
                 return RedirectToAction("Login", "RegisterAndLogin");
+            }
+
+            // Kiem tra do manh mat khau moi (issue #130)
+            if (!PasswordPolicy.IsValid(model.NewPassword))
+            {
+                ModelState.AddModelError("NewPassword", PasswordPolicy.RuleMessage);
+                return View(model);
             }
 
             var oldPasswordHash = Encryptor.MD5Hash(model.OldPassword);

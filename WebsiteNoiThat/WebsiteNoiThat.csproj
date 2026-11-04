@@ -179,6 +179,7 @@
     <Compile Include="Common\Commoncontent.cs" />
     <Compile Include="Common\Encryptor.cs" />
     <Compile Include="Common\HasCredentialAttribute.cs" />
+    <Compile Include="Common\PasswordPolicy.cs" />
     <Compile Include="Common\IdentityDocumentStorage.cs" />
     <Compile Include="Common\MailHelper.cs" />
     <Compile Include="Controllers\CartController.cs" />
@@ -3106,6 +3107,7 @@
     <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
     <Content Include="Scripts\password-toggle.js" />
+    <Content Include="Scripts\password-strength.js" />
     <Content Include="Scripts\jquery.validate.js" />
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />

@@ -10,6 +10,7 @@
 <script src="~/Scripts/jquery.validate.js"></script>
 <script src="~/Scripts/jquery.validate.min.js"></script>
 <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/Scripts/password-strength.js"></script>
 @using (Html.BeginForm("Add", "User", FormMethod.Post))
 {
     @Html.AntiForgeryToken()
@@ -57,7 +58,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.PasswordFor(model => model.Password, new { @class = "form-control", @required = "" })
+                @Html.PasswordFor(model => model.Password, new { @class = "form-control", @required = "", maxlength = "32", data_pw_strength = "true" })
                 @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
             </div>
         </div>

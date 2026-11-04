@@ -44,6 +44,11 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         public ActionResult Add(User n)
         {
             ViewBag.ListGroups = new SelectList(db.UserGroups.Where(a => a.GroupId != "USER").ToList(), "GroupId", "Name");
+            // Kiem tra do manh mat khau (issue #130)
+            if (!PasswordPolicy.IsValid(n.Password))
+            {
+                return JavaScript("alert('" + PasswordPolicy.RuleMessage + "');");
+            }
             var model = new User();
             model.Name = n.Name;
             model.Address = n.Address;
@@ -87,6 +92,11 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                 models.Username = n.Username;
                 if (!string.IsNullOrWhiteSpace(n.Password))
                 {
+                    // Kiem tra do manh mat khau khi co doi (issue #130)
+                    if (!PasswordPolicy.IsValid(n.Password))
+                    {
+                        return JavaScript("alert('" + PasswordPolicy.RuleMessage + "');");
+                    }
                     models.Password = Encryptor.MD5Hash(n.Password);
                 }
                 models.GroupId = n.GroupId;
