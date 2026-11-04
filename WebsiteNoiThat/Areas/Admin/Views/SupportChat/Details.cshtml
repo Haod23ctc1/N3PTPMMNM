@@ -1,0 +1,101 @@
+@model IEnumerable<Models.EF.ChatMessage>
+
+@{
+    ViewBag.Title = "Hội thoại: " + (ViewBag.ThreadEmail ?? "");
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-sm btn-secondary mb-2">
+                <i class="fas fa-arrow-left mr-1"></i>Danh sách hội thoại
+            </a>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-comments text-primary mr-2"></i>
+                Hội thoại — @(ViewBag.ThreadEmail)@(ViewBag.ThreadPhone != null ? " / " + (string)ViewBag.ThreadPhone : "")
+            </h1>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["Success"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle mr-2"></i>@TempData["Warning"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Nội dung hội thoại</h6>
+        </div>
+        <div class="card-body" style="max-height: 460px; overflow-y: auto;">
+            @if (!Model.Any())
+            {
+                <p class="text-center text-muted py-4">Không có tin nhắn nào trong hội thoại này.</p>
+            }
+            else
+            {
+                foreach (var m in Model)
+            {
+                if (m.IsSystem)
+                {
+                    <div class="mb-3">
+                        <div style="font-size: 12px; color: #858796;">
+                            <i class="fas fa-cog"></i> @(m.Sender ?? "Hệ thống") — @m.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                        <div style="background: #e8eefa; border: 1px solid #d1d3e2; border-radius: 8px 8px 8px 0; padding: 10px 14px; max-width: 70%;">
+                            @Html.Raw(Html.Encode(m.Content).Replace("\n", "<br/>"))
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3 text-right">
+                        <div style="font-size: 12px; color: #858796;">
+                            @m.CreatedDate.ToString("dd/MM/yyyy HH:mm") — @(m.Sender ?? "Khách")
+                        </div>
+                        <div style="background: #4e73df; color: #fff; border-radius: 8px 8px 0 8px; padding: 10px 14px; max-width: 70%; display: inline-block; text-align: left;">
+                            @Html.Raw(Html.Encode(m.Content).Replace("\n", "<br/>"))
+                        </div>
+                    </div>
+                }
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Phản hồi cho khách -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-reply mr-1"></i>Phản hồi khách hàng</h6>
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("Reply", "SupportChat", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="email" value="@ViewBag.ThreadEmail" />
+                <input type="hidden" name="phone" value="@(ViewBag.ThreadPhone ?? "")" />
+                <div class="form-group">
+                    <textarea name="content" class="form-control" rows="3" maxlength="4000"
+                              placeholder="Nhập nội dung phản hồi gửi cho khách hàng..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane mr-1"></i>Gửi phản hồi
+                </button>
+            }
+        </div>
+    </div>
+</div>

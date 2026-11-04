@@ -171,6 +171,7 @@
     <Compile Include="Areas\Admin\Controllers\ProductController.cs" />
     <Compile Include="Areas\Admin\Controllers\ProviderController.cs" />
     <Compile Include="Areas\Admin\Controllers\RolesController.cs" />
+    <Compile Include="Areas\Admin\Controllers\SupportChatController.cs" />
     <Compile Include="Areas\Admin\Controllers\UserController.cs" />
     <Compile Include="Areas\Admin\Controllers\UserGroupsController.cs" />
     <Compile Include="Areas\Admin\Models\OrderProduct.cs" />
@@ -2824,6 +2825,8 @@
     <Content Include="Areas\Admin\Views\User\UserProfile.cshtml" />
     <Content Include="Areas\Admin\Views\Order\Partial2.cshtml" />
     <Content Include="Areas\Admin\Views\Contact\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\SupportChat\Index.cshtml" />
+    <Content Include="Areas\Admin\Views\SupportChat\Details.cshtml" />
     <Content Include="Content\admin\scss\navs\_global.scss" />
     <Content Include="Content\admin\scss\navs\_sidebar.scss" />
     <Content Include="Content\admin\scss\navs\_topbar.scss" />

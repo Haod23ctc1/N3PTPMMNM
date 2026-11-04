@@ -1,0 +1,79 @@
+@model IEnumerable<Models.DAO.SupportChatThreadView>
+
+@{
+    ViewBag.Title = "Chat hỗ trợ khách hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-comments text-primary mr-2"></i>Chat Hỗ Trợ Khách Hàng
+        </h1>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i>@TempData["Success"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Danh sách hội thoại với khách hàng</h6>
+            <span class="badge badge-primary p-2"><i class="fas fa-inbox mr-1"></i>@Model.Count() thread</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th style="width: 190px;">Khách hàng</th>
+                            <th style="width: 210px;">Email</th>
+                            <th style="width: 130px;">Điện thoại</th>
+                            <th>Tin nhắn cuối</th>
+                            <th style="width: 140px;" class="text-center">Thời điểm</th>
+                            <th style="width: 90px;" class="text-center">SL tin</th>
+                            <th style="width: 100px;" class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr><td colspan="8" class="text-center text-muted py-4">Chưa có hội thoại nào.</td></tr>
+                        }
+                        @foreach (var t in Model)
+                        {
+                            <tr>
+                                <td class="text-center font-weight-bold">@(t.UserId.HasValue ? "#" + t.UserId.Value : "—")</td>
+                                <td>
+                                    @t.DisplayName
+                                    @if (t.HasGuestOnly)
+                                    {
+                                        <span class="badge badge-secondary ml-1" title="Khách đăng ký chưa xác thực / truy cập không đăng nhập">chưa XT</span>
+                                    }
+                                </td>
+                                <td>@t.Email</td>
+                                <td>@t.Phone</td>
+                                <td class="text-truncate" style="max-width: 320px;" title="@t.LastContent">@t.LastContent</td>
+                                <td class="text-center">@t.LastTime.ToString("dd/MM HH:mm")</td>
+                                <td class="text-center">@t.TotalMessages</td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", new { email = t.Email, phone = t.Phone })"
+                                       class="btn btn-sm btn-primary" title="Xem hội thoại">
+                                        <i class="fas fa-comments"></i> Trả lời
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

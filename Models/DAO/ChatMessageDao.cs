@@ -78,5 +78,84 @@ namespace Models.DAO
             }
             db.SaveChanges();
         }
+
+        // ============ Issue #122: phan ho tro khach hang cho quan tri ============
+
+        // Toan bo tin nhan (admin dung de loc thread cu the theo Email/Phone)
+        public List<ChatMessage> ListAll()
+        {
+            return db.ChatMessages
+                     .OrderBy(m => m.CreatedDate)
+                     .ThenBy(m => m.ChatMessageId)
+                     .ToList();
+        }
+
+        // Danh sach thread (nhom tin nhan theo UserId, khong co UserId thi theo Email+Phone)
+        // de admin xem toan bo hoi thoai ho tro khach hang
+        public List<SupportChatThreadView> ListThreads()
+        {
+            var msgs = db.ChatMessages
+                         .OrderBy(m => m.CreatedDate)
+                         .ThenBy(m => m.ChatMessageId)
+                         .ToList();
+
+            var userMap = db.Users.ToDictionary(u => u.UserId);
+
+            var threads = new List<SupportChatThreadView>();
+            var groups = msgs.GroupBy(m => m.UserId.HasValue
+                ? "U" + m.UserId.Value
+                : "G" + (m.Email ?? string.Empty).Trim().ToLower() + "|" + (m.Phone ?? string.Empty));
+
+            foreach (var g in groups)
+            {
+                var first = g.First();
+                var last = g.Last();
+
+                var t = new SupportChatThreadView();
+                if (first.UserId.HasValue && userMap.ContainsKey(first.UserId.Value))
+                {
+                    var u = userMap[first.UserId.Value];
+                    t.UserId = u.UserId;
+                    t.Name = u.Name;
+                    t.Username = u.Username;
+                    t.Email = u.Email;
+                    t.Phone = u.Phone != null ? u.Phone.ToString() : null;
+                }
+                t.Email = t.Email ?? first.Email;
+                t.Phone = t.Phone ?? first.Phone;
+                t.LastContent = last.Content;
+                t.LastTime = last.CreatedDate;
+                t.TotalMessages = g.Count();
+                t.HasGuestOnly = !first.UserId.HasValue;
+                threads.Add(t);
+            }
+
+            // Thread moi nhat len dau
+            return threads.OrderByDescending(t => t.LastTime).ToList();
+        }
+    }
+
+    // Doi tuong view cho 1 thread chat o phan quan tri (issue #122)
+    public class SupportChatThreadView
+    {
+        public int? UserId { get; set; }
+        public string Name { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string LastContent { get; set; }
+        public DateTime LastTime { get; set; }
+        public int TotalMessages { get; set; }
+        public bool HasGuestOnly { get; set; }
+
+        public string DisplayName
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(Name)) return Name;
+                if (!string.IsNullOrWhiteSpace(Username)) return Username;
+                return Email ?? "(khách chưa xác thực)";
+            }
+        }
     }
 }
