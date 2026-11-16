@@ -42,10 +42,10 @@
                 <th scope="col">Tên sản phẩm</th>
                 <th scope="col">Số lượng</th>
                 <th scope="col">Giá (đã KM nếu có)</th>
+                <th scope="col">Thành tiền</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
                 @foreach (OrderProduct p in (List<OrderProduct>)ViewBag.orderproducts)
                 {
                 <tr>
@@ -53,9 +53,9 @@
                     <td>@p.ProductName</td>
                     <td>@p.Quantity</td>
                     <td>@p.Price₫</td>
+                    <td>@((p.Price * p.Quantity).GetValueOrDefault(0).ToString("N0"))₫</td>
                 </tr>
-            }
-                <tr>
+                }
             </tbody>
         </table>
         <a>Tổng tiền thanh toán:<span style="font-weight:bold; color:crimson;">    @ViewBag.total.ToString("N0") ₫</span></a>

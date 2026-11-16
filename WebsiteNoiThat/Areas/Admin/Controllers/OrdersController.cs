@@ -33,6 +33,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                              ShipName = a.ShipName,
                              ShipPhone = a.ShipPhone,
                              StatusName = b.Name,
+                             StatusId = a.StatusId,
                              UpdateDate = a.UpdateDate,
                              UserId = a.UserId,
 
@@ -52,39 +53,37 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
             Order order = db.Orders.Find(id);
-            ViewBag.aaaa = db.Status.SingleOrDefault(x => x.StatusId == order.StatusId).Name;
             if (order == null)
             {
                 return HttpNotFound();
             }
-            else
+            ViewBag.aaaa = db.Status.SingleOrDefault(x => x.StatusId == order.StatusId).Name;
+
+            var orderproducts = (
+                             from a in db.OrderDetails
+                             join b in db.Orders
+                             on a.OrderId equals b.OrderId
+                             join c in db.Products
+                             on a.ProductId equals c.ProductId
+                             select new OrderProduct
+                             {
+                                 OrderId = a.OrderId,
+                                 ProductName = c.Name,
+                                 Quantity = a.Quantity,
+                                 Price = a.Price,
+                                 ProductId = c.ProductId
+                             }
+                     ).Where(o=>o.OrderId==order.OrderId).ToList();
+            ViewBag.orderproducts = orderproducts;
+
+            double? total = 0;
+            foreach(OrderProduct item in orderproducts)
             {
-                var orderproducts = (
-                                 from a in db.OrderDetails
-                                 join b in db.Orders
-                                 on a.OrderId equals b.OrderId
-                                 join c in db.Products
-                                 on a.ProductId equals c.ProductId
-                                 select new OrderProduct
-                                 {
-                                     OrderId = a.OrderId,
-                                     ProductName = c.Name,
-                                     Quantity = a.Quantity,
-                                     Price = a.Price,
-                                     ProductId = c.ProductId
-                                 }
-                         ).Where(o=>o.OrderId==order.OrderId).ToList();
-                ViewBag.orderproducts = orderproducts;
-
-                double? total = 0;
-                foreach(OrderProduct item in orderproducts)
-                {
-                    total += item.Price;
-                }
-                ViewBag.total = total;
-
-                return View(order);
+                total += item.Price * item.Quantity;
             }
+            ViewBag.total = total;
+
+            return View(order);
         }
 
         public ActionResult Create()
