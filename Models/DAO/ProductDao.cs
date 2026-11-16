@@ -64,7 +64,8 @@ namespace Models.DAO
         public List<Product> NewProduct()
         {
             var now = DateTime.Now;
-            return db.Products.Where(n => n.Discount == 0 || n.EndDate < now || n.StartDate > now).OrderByDescending(n => n.StartDate).Take(8).ToList();
+            // issue #153: sap xep san pham moi theo ID san pham (ID lon = them moi xep truoc)
+            return db.Products.Where(n => n.Discount == 0 || n.EndDate < now || n.StartDate > now).OrderByDescending(n => n.ProductId).Take(8).ToList();
         }
         public Product DetailsProduct(int Id)
         {
