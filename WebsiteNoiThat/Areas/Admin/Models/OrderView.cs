@@ -34,6 +34,9 @@ namespace WebsiteNoiThat.Areas.Admin.Models
         [DisplayName("Trạng thái đơn hàng")]
         public string StatusName { get; set; }
 
+        [DisplayName("Mã trạng thái")]
+        public int? StatusId { get; set; }
+
         [System.ComponentModel.DataAnnotations.Schema.Column(TypeName = "date")]
         [DisplayName("Ngày cập nhật")]
         public DateTime? UpdateDate { get; set; }

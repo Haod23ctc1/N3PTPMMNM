@@ -59,13 +59,24 @@
                                 @Html.DisplayFor(modelItem => item.ShipEmail)
                             </td>
                             <td>
-                                @Html.DisplayFor(modelItem => item.UpdateDate)
+                                @(item.UpdateDate.HasValue ? item.UpdateDate.Value.ToString("dd/MM/yyyy HH:mm") : "")
                             </td>
                             <td>
                                 @Html.DisplayFor(modelItem => item.ShipAddress)
                             </td>
                             <td>
-                                @Html.DisplayFor(modelItem => item.StatusName)
+                                @if (item.StatusId == 5)
+                                {
+                                    <span class="badge badge-success">@item.StatusName</span>
+                                }
+                                else if (item.StatusId >= 3)
+                                {
+                                    <span class="badge badge-primary">@item.StatusName</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-warning">@item.StatusName</span>
+                                }
                             </td>
                             <td width="200px">
                                 <input type="button" class="btn btn-sm btn-primary" value="Xem" onclick="location.href='/Admin/Orders/Details/@item.OrderId'" />
@@ -83,12 +94,19 @@
 
 </div>
 
-<script src="~/Scripts/jquery-3.3.1.js"></script>
-<script src="~/Scripts/bootstrap.min.js"></script>
-<script src="~/Content/DataTable/js/jquery.dataTables.min.js"></script>
-<script src="~/Content/DataTable/js/dataTables.bootstrap.min.js"></script>
-
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
 <script type="text/javascript">
-    $('#example').DataTable();
+    $(document).ready(function () {
+        $('#example').DataTable({
+            lengthChange: true,
+            pageLength: 10,
+            language: {
+                emptyTable: "Chưa có đơn hàng nào",
+                lengthMenu: "Hiển thị _MENU_ đơn/trang",
+                search: "Tìm kiếm:",
+                info: "Đơn _START_ - _END_ / tổng _TOTAL_ đơn",
+                paginate: { first: "Đầu", last: "Cuối", next: "Sau", previous: "Trước" }
+            }
+        });
+    });
 </script>
-<script src="~/Scripts/jquery-3.3.1.min.js"></script>
