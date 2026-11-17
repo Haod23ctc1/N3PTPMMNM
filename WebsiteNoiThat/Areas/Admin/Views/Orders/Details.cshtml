@@ -58,7 +58,7 @@
                 }
             </tbody>
         </table>
-        <a>Tổng tiền thanh toán:<span style="font-weight:bold; color:crimson;">    @ViewBag.total.ToString("N0") ₫</span></a>
+        <a>Tổng tiền thanh toán:<span style="font-weight:bold; color:crimson;">    @(((double?)ViewBag.total ?? 0).ToString("N0")) ₫</span></a>
     </div>
     </div>
     <br />
