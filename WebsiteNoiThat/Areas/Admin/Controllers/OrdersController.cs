@@ -57,7 +57,8 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
             {
                 return HttpNotFound();
             }
-            ViewBag.aaaa = db.Status.SingleOrDefault(x => x.StatusId == order.StatusId).Name;
+            var st = db.Status.SingleOrDefault(x => x.StatusId == order.StatusId);
+            ViewBag.aaaa = st != null ? st.Name : "Chưa cập nhật";
 
             var orderproducts = (
                              from a in db.OrderDetails
@@ -81,7 +82,7 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
             {
                 total += item.Price * item.Quantity;
             }
-            ViewBag.total = total;
+            ViewBag.total = total ?? 0;
 
             return View(order);
         }
@@ -129,13 +130,15 @@ namespace WebsiteNoiThat.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(Order order)
         {
-            if (ModelState.IsValid)
+            var dbOrder = db.Orders.Find(order.OrderId);
+            if (dbOrder != null)
             {
-                order.UpdateDate = DateTime.Now;
-                db.Entry(order).State = EntityState.Modified;
+                dbOrder.StatusId = order.StatusId;
+                dbOrder.UpdateDate = DateTime.Now;
                 db.SaveChanges();
                 return RedirectToAction("Show");
             }
+            ViewBag.ListStatus = new SelectList(db.Status.ToList(), "StatusId", "Name", order.StatusId);
             return View(order);
         }
 
