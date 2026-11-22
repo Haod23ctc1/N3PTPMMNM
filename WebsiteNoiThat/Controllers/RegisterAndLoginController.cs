@@ -100,13 +100,21 @@ namespace WebsiteNoiThat.Controllers
                 if (result == 1)
                 {
                     var user = dao.GetUserForLogin(model.UserName);
+                    
+                    // Kiểm tra xác minh
+                    var verify = db.IdentityVerifications.FirstOrDefault(v => v.UserId == user.UserId);
+                    if (verify != null && verify.Status == "Pending")
+                    {
+                        ModelState.AddModelError("", "Tài khoản của bạn đang chờ Admin duyệt!");
+                        return View(model);
+                    }
+
                     var userSession = new UserLogin();
                     userSession.Username = user.Username;
                     userSession.UserId = user.UserId;
                     Session.Add(Commoncontent.user_sesion, userSession);
 
-                    // Tài khoản Admin đăng nhập từ trang khách -> vào thẳng khu quản lý,
-                    // khách hàng thường -> về trang chủ mua hàng (issue #95)
+                    // Tài khoản Admin đăng nhập từ trang khách
                     if (user.GroupId == CommonConstant.ADMIN_GROUP)
                     {
                         var adminSession = new UserLogin();
@@ -125,7 +133,7 @@ namespace WebsiteNoiThat.Controllers
                 }
                 else if (result == -1)
                 {
-                    ModelState.AddModelError("", "Tài khoản đang bị khóa, liên hệ admin.");
+                    ModelState.AddModelError("", "Khi xác nhận email, bạn cần gửi ảnh CCCD hoặc hộ chiếu để ADMIN/MOD duyệt. Chỉ tài khoản đã được duyệt có thể đặt lại mật khẩu.");
                 }
                 else if (result == 0)
                 {
@@ -357,8 +365,8 @@ namespace WebsiteNoiThat.Controllers
                 Email = registerData.Email,
                 Address = registerData.Address,
                 Name = registerData.Name,
-                GroupId = "USER",
-                Status = true // Kích hoạt sau khi xác thực email thành công
+                GroupId = registerData.UserType ?? "USER",
+                Status = false
             };
 
             var result = dao.Insert(user);

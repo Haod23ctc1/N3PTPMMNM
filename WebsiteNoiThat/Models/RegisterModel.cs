@@ -53,5 +53,8 @@ namespace WebsiteNoiThat.Models
         public string DocumentNumber { get; set; }
 
         public int CartId { get; set; }
+        // Thêm vào trong class RegisterModel
+        [Display(Name = "Loại tài khoản")]
+        public string UserType { get; set; } // Gửi lên giá trị "CUSTOMER" hoặc "EMPLOYEE"
     }
 }
