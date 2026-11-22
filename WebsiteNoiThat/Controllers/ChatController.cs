@@ -160,5 +160,19 @@ namespace WebsiteNoiThat.Controllers
                 return db.Users.FirstOrDefault(u => u.Email.ToLower() == mail && u.Phone == phoneNum);
             }
         }
+        // Get unread count from Admin
+        public ActionResult GetUnreadCount()
+        {
+            var session = (UserLogin)Session[Commoncontent.user_sesion];
+            if (session == null) return Json(0, JsonRequestBehavior.AllowGet);
+
+            using (var db = new DBNoiThat())
+            {
+                // Tin nhắn từ admin (hệ thống)
+                int count = db.ChatMessages.Count(m => m.UserId == session.UserId && m.IsSystem == true && m.Status == true);
+                return Json(count, JsonRequestBehavior.AllowGet);
+            }
+        }
+
     }
 }
