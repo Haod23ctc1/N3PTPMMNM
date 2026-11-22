@@ -1,0 +1,37 @@
+@model IEnumerable<Models.EF.IdentityVerification>
+@{ ViewBag.Title = "Duyệt tài khoản"; Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml"; }
+
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Duyệt xác minh tài khoản</h1>
+    <!-- D:\WebsiteNoiThat\Areas\Admin\Views\UserApproval\Index.cshtml -->
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Tài khoản</th>
+            <th>Giấy tờ</th> <!-- Cột hiển thị ảnh -->
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+        <tr>
+            <td>@item.User.Username</td>
+            <td>
+                @if (!string.IsNullOrEmpty(item.FrontFileName)) {
+                    <a href="@Url.Action("ViewDocument", "UserApproval", new { fileName = item.FrontFileName })" target="_blank" class="btn btn-info btn-sm">Xem mặt trước</a>
+                }
+                @if (!string.IsNullOrEmpty(item.BackFileName)) {
+                    <a href="@Url.Action("ViewDocument", "UserApproval", new { fileName = item.BackFileName })" target="_blank" class="btn btn-info btn-sm">Xem mặt sau</a>
+                }
+            </td>
+            <td>
+                @using(Html.BeginForm("Approve", "UserApproval")) {
+                    <input type="hidden" name="id" value="@item.IdentityVerificationId" />
+                    <button class="btn btn-success">Duyệt & Kích hoạt</button>
+                }
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+</div>
