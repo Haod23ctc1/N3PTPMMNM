@@ -175,6 +175,7 @@
     <Compile Include="Areas\Admin\Controllers\UserApprovalController.cs" />
     <Compile Include="Areas\Admin\Controllers\UserController.cs" />
     <Compile Include="Areas\Admin\Controllers\UserGroupsController.cs" />
+    <Compile Include="Areas\Admin\Models\DashboardViewModel.cs" />
     <Compile Include="Areas\Admin\Models\OrderProduct.cs" />
     <Compile Include="Areas\Admin\Models\OrderView.cs" />
     <Compile Include="Areas\Admin\Models\LoginModel.cs" />

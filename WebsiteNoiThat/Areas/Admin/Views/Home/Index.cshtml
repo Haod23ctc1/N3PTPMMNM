@@ -1,7 +1,339 @@
-﻿
+﻿@using System.Linq
+@using Newtonsoft.Json
+@model WebsiteNoiThat.Areas.Admin.Models.DashboardViewModel
+
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Tổng quan";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    var statusLabels = Model.OrdersByStatus.Select(x => x.Name).ToList();
+    var statusValues = Model.OrdersByStatus.Select(x => x.Count).ToList();
+    var topLabels = Model.TopProducts.Select(x => x.Name).ToList();
+    var topValues = Model.TopProducts.Select(x => x.Quantity).ToList();
 }
 
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Tổng quan</h1>
+    <a href="@Url.Action("Viewmodel", "Order", new { area = "Admin" })" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-chart-bar fa-sm text-white-50"></i> Xem báo cáo chi tiết
+    </a>
+</div>
 
+@if (ViewBag.DashboardError != null)
+{
+    <div class="alert alert-danger">@ViewBag.DashboardError</div>
+}
+
+<!-- Thẻ số liệu tổng quan -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="@Url.Action("Show", "Product", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Sản phẩm</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ProductCount.ToString("N0")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cube fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="@Url.Action("Show", "Orders", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Đơn hàng</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.OrderCount.ToString("N0")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="@Url.Action("Show", "Customer", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Khách hàng</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CustomerCount.ToString("N0")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="@Url.Action("Viewmodel", "Order", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Doanh thu (đã thanh toán)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Revenue.ToString("N0") ₫</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Việc cần xử lý -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <a href="@Url.Action("Show", "Orders", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Đơn hàng cần xử lý</div>
+                            <div class="h5 mb-1 font-weight-bold text-gray-800">@Model.PendingOrderCount.ToString("N0") đơn</div>
+                            <div class="small text-gray-600">Đơn đang ở trạng thái "Đã tiếp nhận" hoặc "Đang chờ xử lý".</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <a href="@Url.Action("Index", "Contact", new { area = "Admin" })" class="text-decoration-none">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Yêu cầu hỗ trợ chưa xử lý</div>
+                            <div class="h5 mb-1 font-weight-bold text-gray-800">@Model.PendingContactCount.ToString("N0") yêu cầu</div>
+                            <div class="small text-gray-600">Tin nhắn liên hệ khách hàng gửi chưa được phản hồi.</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-headset fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Biểu đồ -->
+<div class="row">
+    <div class="col-xl-5 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Đơn hàng theo trạng thái</h6>
+            </div>
+            <div class="card-body">
+                @if (statusLabels.Count > 0)
+                {
+                    <div class="chart-pie pt-2" style="position: relative; height: 20rem;">
+                        <canvas id="ordersByStatusChart"></canvas>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-5">Chưa có đơn hàng nào.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-7 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top 5 sản phẩm bán chạy</h6>
+            </div>
+            <div class="card-body">
+                @if (topLabels.Count > 0)
+                {
+                    <div class="chart-bar" style="position: relative; height: 20rem;">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-gray-500 py-5">Chưa có dữ liệu bán hàng.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Đơn hàng gần đây -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Đơn hàng gần đây</h6>
+        <a href="@Url.Action("Show", "Orders", new { area = "Admin" })" class="small">Xem tất cả</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Cập nhật</th>
+                        <th>Trạng thái</th>
+                        <th class="text-right">Tổng tiền</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.RecentOrders.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-500">Chưa có đơn hàng nào.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var o in Model.RecentOrders)
+                        {
+                            string badgeClass = "badge-secondary";
+                            if (o.StatusId == 1)
+                            {
+                                badgeClass = "badge-warning";
+                            }
+                            else if (o.StatusId == 2)
+                            {
+                                badgeClass = "badge-info";
+                            }
+                            else if (o.StatusId == 3)
+                            {
+                                badgeClass = "badge-primary";
+                            }
+                            else if (o.StatusId == 4)
+                            {
+                                badgeClass = "badge-info";
+                            }
+                            else if (o.StatusId == 5)
+                            {
+                                badgeClass = "badge-success";
+                            }
+
+                            <tr>
+                                <td>#@o.OrderId</td>
+                                <td>@(string.IsNullOrEmpty(o.ShipName) ? "Khách lẻ" : o.ShipName)</td>
+                                <td>@(o.UpdateDate.HasValue ? o.UpdateDate.Value.ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                <td><span class="badge @badgeClass">@o.StatusName</span></td>
+                                <td class="text-right">@o.Total.ToString("N0") ₫</td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", "Orders", new { area = "Admin", id = o.OrderId })" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="~/Content/admin/vendor/chart.js/Chart.min.js"></script>
+@if (statusLabels.Count > 0)
+{
+    <script>
+        (function () {
+            var canvas = document.getElementById("ordersByStatusChart");
+            if (!canvas || typeof Chart === "undefined") { return; }
+            new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                    labels: @Html.Raw(JsonConvert.SerializeObject(statusLabels)),
+                    datasets: [{
+                        data: @Html.Raw(JsonConvert.SerializeObject(statusValues)),
+                        backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#858796", "#5a5c69"],
+                        hoverBackgroundColor: ["#2e59d9", "#17a673", "#2c9faf", "#dda20a", "#be2617", "#6b6d7d", "#46464f"],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)"
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutoutPercentage: 60,
+                    legend: { position: "bottom" },
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                var label = data.labels[tooltipItem.index] || "";
+                                var value = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+                                return label + ": " + value + " đơn";
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}
+@if (topLabels.Count > 0)
+{
+    <script>
+        (function () {
+            var canvas = document.getElementById("topProductsChart");
+            if (!canvas || typeof Chart === "undefined") { return; }
+            new Chart(canvas, {
+                type: "horizontalBar",
+                data: {
+                    labels: @Html.Raw(JsonConvert.SerializeObject(topLabels)),
+                    datasets: [{
+                        label: "Số lượng đã bán",
+                        data: @Html.Raw(JsonConvert.SerializeObject(topValues)),
+                        backgroundColor: "rgba(78, 115, 223, 0.7)",
+                        hoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    scales: {
+                        xAxes: [{
+                            ticks: { beginAtZero: true, precision: 0 },
+                            gridLines: { color: "rgba(0, 0, 0, 0.05)" }
+                        }],
+                        yAxes: [{
+                            gridLines: { display: false },
+                            ticks: {
+                                callback: function (value) {
+                                    var text = String(value);
+                                    return text.length > 26 ? text.substring(0, 26) + "…" : text;
+                                }
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+}
