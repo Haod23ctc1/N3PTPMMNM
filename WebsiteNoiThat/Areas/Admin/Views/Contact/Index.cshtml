@@ -163,18 +163,28 @@
 @section scripts {
     <script>
         $(document).ready(function () {
-            $('.btn-reply').click(function () {
-                var contactId = $(this).data('id');
-                var email = $(this).data('email');
-                var content = $(this).data('content');
-
-                $('#modalContactId').val(contactId);
-                $('#modalCustomerEmail').val(email ? email : '(Chưa cung cấp email)');
-                $('#modalCustomerContent').val(content);
+            function openReplyModal($btn) {
+                $('#modalContactId').val($btn.data('id'));
+                $('#modalCustomerEmail').val($btn.data('email') ? $btn.data('email') : '(Chưa cung cấp email)');
+                $('#modalCustomerContent').val($btn.data('content'));
                 $('#replyContent').val('');
-
                 $('#replyModal').modal('show');
+            }
+
+            $('.btn-reply').click(function () {
+                openReplyModal($(this));
             });
+
+            // Deep-link tu hop thu tren thanh quan tri: /Admin/Contact#reply-<id>
+            // -> mo dung yêu cầu và bật sẵn modal trả lời
+            var match = /^#reply-(\d+)$/.exec(window.location.hash);
+            if (match) {
+                var $btn = $('.btn-reply[data-id="' + match[1] + '"]');
+                if ($btn.length) {
+                    $btn.closest('tr').addClass('table-warning');
+                    openReplyModal($btn);
+                }
+            }
         });
     </script>
 }

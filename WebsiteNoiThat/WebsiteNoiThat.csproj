@@ -179,6 +179,7 @@
     <Compile Include="Areas\Admin\Models\OrderView.cs" />
     <Compile Include="Areas\Admin\Models\LoginModel.cs" />
     <Compile Include="Common\Commoncontent.cs" />
+    <Compile Include="Common\AdminInboxHelper.cs" />
     <Compile Include="Common\Encryptor.cs" />
     <Compile Include="Common\HasCredentialAttribute.cs" />
     <Compile Include="Common\PasswordPolicy.cs" />
