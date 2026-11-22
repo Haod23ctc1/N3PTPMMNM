@@ -135,7 +135,13 @@
                                                 @Html.TextBoxFor(model => model.Phone, new { @class = "form-control form-control-user", @placeholder = "Số điện thoại (VD: 0901234567)" })
                                                 @Html.ValidationMessageFor(model => model.Phone, "", new { @class = "text-danger small pl-3" })
                                             </div>
-
+                                            <div class="form-group">
+                                                <label>Bạn đăng ký với tư cách:</label>
+                                                <select name="UserType" class="form-control">
+                                                    <option value="CUSTOMER">Khách hàng</option>
+                                                    <option value="EMPLOYEE">Nhân viên</option>
+                                                </select>
+                                            </div>
                                             <div class="form-group">
                                                 <label for="DocumentType">Loại giấy tờ tùy thân</label>
                                                 <select id="DocumentType" name="DocumentType" class="form-control" required>
